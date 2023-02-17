@@ -13,7 +13,7 @@ import { CfnDBCluster, CfnDBSubnetGroup } from 'aws-cdk-lib/aws-rds';
 
 const { Protocol } = elbv2;
 const dbName = "mlflowdb"
-const dbPort = 3306
+const dbPort = 5432
 const dbUsername = "master"
 const clusterName = "mlflowCluster"
 const serviceName = "mlflowService"
@@ -103,8 +103,8 @@ export class MLflowVpcStack extends cdk.Stack {
     const dbConfig = {
       dbClusterIdentifier: `${serviceName}-cluster`,
       engineMode: 'serverless',
-      engine: 'aurora-mysql',
-      engineVersion: '5.7.12',
+      engine: 'aurora-postgresql',
+      engineVersion: '11.16',
       databaseName: dbName,
       deletionProtection: false,
       masterUsername: databaseCredentialsSecret.secretValueFromJson('username').toString(),

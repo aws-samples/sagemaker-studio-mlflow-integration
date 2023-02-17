@@ -3,7 +3,7 @@ FROM python:3.9.0
 RUN pip install \
     mlflow==2.2.1\
     boto3 \
-    pymysql==1.0.2
+    psycopg2==2.9.5
 
 RUN mkdir /mlflow/
 
@@ -14,4 +14,4 @@ CMD mlflow server \
     --port 5000 \
     --default-artifact-root ${BUCKET} \
     --gunicorn-opts "--log-level debug --timeout 180 --workers=2 --threads=4 --worker-class=gthread" \
-    --backend-store-uri mysql+pymysql://${USERNAME}:${PASSWORD}@${HOST}:${PORT}/${DATABASE}
+    --backend-store-uri postgresql+psycopg2://${USERNAME}:${PASSWORD}@${HOST}:${PORT}/${DATABASE}
