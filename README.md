@@ -15,17 +15,17 @@ Due to its modularity, this sample can be extended in a number of ways, and we w
 ## Architecture
 
 This sample is made of 4 different stacks:
-* [`MLFlowVPCStack`](https://gitlab.aws.dev/frpaolo/sagemaker-studio-mlflow-integration/blob/main/cdk/lib/mlflow-vpc-stack.ts)
+* [`MLFlowVPCStack`](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cdk/lib/mlflow-vpc-stack.ts)
     * deploys a MLFLow tracking server on a serverless infrastructure running on ECS and Fargate on a private subnet
     * deploys an Aurora Serverless database for the data store and S3 for the artifact store.
-* [`RestApiGatewayStack`](https://gitlab.aws.dev/frpaolo/sagemaker-studio-mlflow-integration/blob/main/cdk/lib/rest-api-gateway-stack.ts)
+* [`RestApiGatewayStack`](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cdk/lib/rest-api-gateway-stack.ts)
     * exposes the MLFlow server via a PrivateLink to an REST API Gateway.
     * deploys a Cognito User Pool to manage the users accessing the UI.
     * deploy a Lambda Authorizer to verify the JWT token with the Cognito User Pool ID keys and returns IAM policies to allow or deny a request.
     * adds IAM Authorizer. This will be applied to the 
-* [`AmplifyMLFlowStack`](https://gitlab.aws.dev/frpaolo/sagemaker-studio-mlflow-integration/blob/main/cdk/lib/amplify-mlflow-stack.ts)
+* [`AmplifyMLFlowStack`](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cdk/lib/amplify-mlflow-stack.ts)
     * creates an app with CI/CD capability to deploy the MLFLow UI
-* [`SageMakerStudioUserStack`](https://gitlab.aws.dev/frpaolo/sagemaker-studio-mlflow-integration/blob/main/cdk/lib/sagemaker-studio-user-stack.ts)
+* [`SageMakerStudioUserStack`](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cdk/lib/sagemaker-studio-user-stack.ts)
     * deploys a SageMaker Studio domain (if not existing).
     * adds three users, each one with a different SageMaker execution role implementing different access level:
         * `mlflow-admin` -> admin like permission to the MLFlow resources
@@ -54,7 +54,7 @@ For the instance type, we tested with a `t3.medium`, but you can very likely use
 
 Open a new terminal inside AWS Cloud9 IDE and run:
 ```bash
-git clone https://gitlab.aws.dev/frpaolo/sagemaker-studio-mlflow-integration.git
+git clone https://github.com/aws-samples/sagemaker-studio-mlflow-integration.git
 ```
 
 #### Setting the expected ENV variables
@@ -82,7 +82,7 @@ echo "export DOMAIN_ID=${DOMAIN_ID}" | tee -a ~/.bash_profile
 
 MLflow UI does not support natively integration with Amazon Cognito.
 We provide you a patch to be applied on top of MLflow `1.30.0` that adds Amplify React Components for authentication and the logic on how to inject the JWT token into every request.
-The patch we provided can be checked [here](https://gitlab.aws.dev/frpaolo/sagemaker-studio-mlflow-integration/blob/main/cognito.patch).
+The patch we provided can be checked [here](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cognito.patch).
 
 ```bash
 git clone --depth 1 --branch v1.30.0 https://github.com/mlflow/mlflow.git
@@ -143,7 +143,7 @@ To execute the script, please run the following command (please make sure you ch
 cd ~/environment/sagemaker-studio-mlflow-integration/src/cognito/
 python add_users_and_groups.py --password '<ChangeMe123!>'
 ```
-All three users gets created with the same default password. To check the script code [here](https://gitlab.aws.dev/frpaolo/sagemaker-studio-mlflow-integration/blob/main/src/cognito/add_users_and_groups.py).
+All three users gets created with the same default password. To check the script code [here](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/src/cognito/add_users_and_groups.py).
 
 After running the script, if you check the Cognito User Pool in the console you should see the three users created
 
@@ -159,7 +159,7 @@ For our specific case, we have three groups:
 Depending on the group, the Lambda Authorizer will generate different IAM Policies.
 This is just an example on how authorization can be achieved, in fact, with a Lambda Authorizer, you can implement any logic you want.
 If you want to restrict only a subset of actions, you need to be aware of the MLFlow REST API definition, which can be found [here](https://www.mlflow.org/docs/latest/rest-api.html)
-The code for the Lambda Authorizer can be explored [here](https://gitlab.aws.dev/frpaolo/sagemaker-studio-mlflow-integration/blob/main/cdk/lambda/authorizer/index.py)
+The code for the Lambda Authorizer can be explored [here](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cdk/lambda/authorizer/index.py)
 
 ### Updates to the MLFlow UI to integrate with Cognito and the Lambda Authorizer
 
