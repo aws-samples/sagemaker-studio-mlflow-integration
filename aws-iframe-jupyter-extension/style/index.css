@@ -1,0 +1,27 @@
+#aws_iframe_jupyter_left_side_launcher .aws_iframe_header {
+  border-bottom: 1px solid lightgrey;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 8px 12px;
+  color: white;
+}
+
+
+#aws_iframe_jupyter_left_side_launcher #aws_iframe_launch_button {
+  padding: 8px 20px;
+}
+
+#aws_iframe_launch_button {
+  color: white;
+}
+
+#aws_iframe_jupyter_left_side_launcher #aws_iframe_launch_button:hover {
+  background: #2D3949;
+  cursor: pointer;
+}
+
+.jp-mlflow-logo {
+  background-image: url("./icons/MLflow_icon.svg")
+}

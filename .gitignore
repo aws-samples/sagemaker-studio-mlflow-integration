@@ -1,0 +1,23 @@
+
+!jest.config.js
+*.d.ts
+**/node_modules/
+**/.vscode/
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+# Parcel default cache directory
+.parcel-cache
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environments
+.env
+.venv
+env/
+venv/
+
+**/.DS_Store

@@ -1,0 +1,4 @@
+mlflow==1.30.0
+requests_auth_aws_sigv4
+matplotlib
+sagemaker-experiments
