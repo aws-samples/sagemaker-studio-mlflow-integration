@@ -80,15 +80,19 @@ echo "export DOMAIN_ID=${DOMAIN_ID}" | tee -a ~/.bash_profile
 
 #### Apply patch to MLflow-UI
 
-MLflow UI does not support natively integration with Amazon Cognito.
-We provide you a patch to be applied on top of MLflow `1.30.0` that adds Amplify React Components for authentication and the logic on how to inject the JWT token into every request.
-The patch we provided can be checked [here](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cognito.patch).
+MLflow UI does not support any login workflow, nonetheless mechanisms to set the proper headers to authenticated API calls against a backend service.
+Amplify provides libraries that can be used to quickly add a login workflow, and to easily manage the lifecycle of the authentication tokens.
+We provide you a patch to be applied on top of MLflow `1.30.0` that adds Amplify React Components for authentication and how to add `Authorization` header with a `Bearer` token for every backend API call.
+The patch we provided can be checked [here](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cognito.patch) and it will enable a login flow backed by Amazon Cognito as shown in Fig. 2.
 
 ```bash
 git clone --depth 1 --branch v1.30.0 https://github.com/mlflow/mlflow.git
 cd mlflow
 git am ../cognito.patch
 ```
+
+![MLflowCognito](./images/mlflow-cognito.png)
+*Fig. 2 - MLflow login flow using AWS Amplify, Amazon Cognito and Lambda Authorizer on the API Gateway*
 
 #### Resizing the Cloud9
 Before deploying, since we use CDK construct to build the container images locally, we need a larger disk size than the one provided by Cloud9 in its default environment configuration (i.e. 20GB, whivh is not enough).
@@ -148,7 +152,7 @@ All three users gets created with the same default password. To check the script
 After running the script, if you check the Cognito User Pool in the console you should see the three users created
 
 ![CognitoUsers](./images/cognito-user-pool.png)
-*Fig. 2 - Cognito users in the Cognito User Pool.*
+*Fig. 3 - Cognito users in the Cognito User Pool.*
 
 On the REST API Gateway side, the Lambda Authorizer will first verify the signature of the token using the Cognito User Pool Key, verify the claims, and only after that, it will extract the cognito group the user belongs to from the claim in JWT token (i.e., `cognito:groups`), and apply different permissions based on the group itself that we have programmed.
 For our specific case, we have three groups:
@@ -160,16 +164,6 @@ Depending on the group, the Lambda Authorizer will generate different IAM Polici
 This is just an example on how authorization can be achieved, in fact, with a Lambda Authorizer, you can implement any logic you want.
 If you want to restrict only a subset of actions, you need to be aware of the MLFlow REST API definition, which can be found [here](https://www.mlflow.org/docs/latest/rest-api.html)
 The code for the Lambda Authorizer can be explored [here](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cdk/lambda/authorizer/index.py)
-
-### Updates to the MLFlow UI to integrate with Cognito and the Lambda Authorizer
-
-The MLFLow UI currently does not implement neither a login form, nor a mechanism to authenticate its requests to the backend.
-Luckly, Amplify provides libraries that can be used to quickly add a login workflow, and to easily manage the lifecycle of the authentication tokens.
-Furthermore, every authenticated request needs to add the `Authorization` header with a `Bearer` token.
-With few code changes to the MLFlow codebase, we can enable these features. You do not need to make any changes to the MLFlow code base, as these changes have been added already to the [`update_utils`](https://github.com/pdifranc/mlflow/commits/update_utils) branch.
-
-![MLflowCognito](./images/mlflow-cognito.png)
-*Fig. 3 - MLflow login flow using AWS Amplify, Amazon Cognito and Lambda Authorizer on the API Gateway*
 
 ## *Integration with SageMaker*
 
@@ -206,30 +200,30 @@ mlflow sagemaker build-and-push-container
 ### Accessing the MLFlow UI
 Before accessing the MLFlow UI, we need to ensure the the first build got executed.
 Navigate to the Amplify console, and select the `MLFlow-UI` app that we have created.
-Then execute the first build as shown in Fig. 3.
+Then execute the first build as shown in Fig. 4.
 
 ![AmplifyFirstBuild](./images/amplify-run-first-build.png)
-*Fig. 3 - Execute the first build for the MLFlow UI*
+*Fig. 4 - Execute the first build for the MLFlow UI*
 
-Once the build completes (might take some time) you can access the MLFlow UI from the link provided by Amplify as shown in Fig. 4.
+Once the build completes (might take some time) you can access the MLFlow UI from the link provided by Amplify as shown in Fig. 5.
 
 ![AmplifyMLflowUI](./images/amplify-mlflow-ui-link.png)
-*Fig. 4 - Retrieve the URL of the MLFlow UI*
+*Fig. 5 - Retrieve the URL of the MLFlow UI*
 
 ### MLFlow / Amazon SageMaker Studio integration lab
 
 In the AWS console, navigate to Amazon SageMaker Studio and open Studio for the `mlflow-admin` user as shown in the pictures below.
 
 ![SageMakerStudio](./images/launch-sm-studio.png)
-*Fig 5 - Navigate to Amazon SageMaker Studio*
+*Fig 6 - Navigate to Amazon SageMaker Studio*
 
 ![SageMakerStudioUser](./images/sm-mlflow-admin.png)
-*Fig 6 - Launch Amazon SageMaker Studio for the `mlflow-admin`*
+*Fig 7 - Launch Amazon SageMaker Studio for the `mlflow-admin`*
 
 Clone this repository either from the terminal or from the Studio UI.
 
 ![CloneRepoStudio](./images/clone-repo-studio-ui.png)
-*Fig 7 - Clone repo in SageMaker Studio*
+*Fig 8 - Clone repo in SageMaker Studio*
 
 Navigate to the `./sagemaker-studio-mlflow-integration/lab/` folder and open the open the `sagemaker_studio_and_mlflow.ipynb` notebook.
 You can see how to train in Amazon SageMaker and store the resulting models in MLFlow after retrieving the credentials at runtime and how to deploy models stored in Amazon SageMaker endpoints using the MLFlow SDK.
@@ -255,7 +249,7 @@ sed -i 's/<REPLACE-ME>/'"https:\/\/<BRANCH>.<CUSTOM-SUBDOMAIN>.amplifyapp.com"'/
 Open a new Terminal from SageMaker Studio as shown in Fig. 8
 
 ![studio-open-terminal](./images/studio-open-terminal.png)
-*Fig. 8 - Open a new Terminal in SageMaker Studio*
+*Fig. 9 - Open a new Terminal in SageMaker Studio*
 
 
 * Initialize conda: `conda init` (you might need to restart the terminal)
@@ -285,7 +279,7 @@ restart-jupyter-server
 You can now access MLFlow UI without leaving the SageMaker Studio UI using the same set of credentials you have stored in Amazon Cognito as shown in Fig. 9
 
 ![studio-iframe-mlflow](./images/studio-iframe-mlflow.png)
-*Fig. 9 - Access MLFlow UI from within SageMaker Studio*
+*Fig. 10 - Access MLFlow UI from within SageMaker Studio*
 
 ## Cleanup
 
