@@ -1,43 +1,7 @@
-From 90be36dfe6c3cdbe7fcacba0c4d6d8f8de46075b Mon Sep 17 00:00:00 2001
-From: Paolo Di Francesco <frpaolo@amazon.com>
-Date: Sat, 4 Jun 2022 22:23:54 +0200
-Subject: [PATCH 1/3] update origin on update title utils
-
----
- mlflow/server/js/src/common/utils/Utils.js | 12 ++++++------
- 1 file changed, 6 insertions(+), 6 deletions(-)
-
-diff --git a/mlflow/server/js/src/common/utils/Utils.js b/mlflow/server/js/src/common/utils/Utils.js
-index e584980e4..17362d220 100644
---- a/mlflow/server/js/src/common/utils/Utils.js
-+++ b/mlflow/server/js/src/common/utils/Utils.js
-@@ -1055,12 +1055,12 @@ class Utils {
-   static getSupportPageUrl = () => SupportPageUrl;
- 
-   static getIframeCorrectedRoute(route) {
--    if (window.self !== window.top || window.isTestingIframe) {
--      // If running in an iframe, include the parent params and assume mlflow served at #
--      const parentHref = window.parent.location.href;
--      const parentHrefBeforeMlflowHash = parentHref.split('#')[0];
--      return `${parentHrefBeforeMlflowHash}#mlflow${route}`;
--    }
-+    // if (window.self !== window.top || window.isTestingIframe) {
-+    //   // If running in an iframe, include the parent params and assume mlflow served at #
-+    //   const parentHref = window.parent.location.href;
-+    //   const parentHrefBeforeMlflowHash = parentHref.split('#')[0];
-+    //   return `${parentHrefBeforeMlflowHash}#mlflow${route}`;
-+    // }
-     return `./#${route}`; // issue-2213 use relative path in case there is a url prefix
-   }
- 
--- 
-2.37.1 (Apple Git-137.1)
-
-
-From b5ad36ccfb268dd1a75b4a6d49ef302ca18aeb3b Mon Sep 17 00:00:00 2001
+From ec72c830e8c03ae2435a5ce5c44b47e4092b6585 Mon Sep 17 00:00:00 2001
 From: Paolo Di Francesco <frpaolo@amazon.com>
 Date: Mon, 27 Jun 2022 14:41:02 +0200
-Subject: [PATCH 2/3] Add Cognito Authentication to Mlflow UI
+Subject: [PATCH] Add Cognito Authentication to Mlflow UI
 
 * add ampligy libraries
 * ensure JWT is passed on every request to the backend
@@ -46,12 +10,14 @@ Subject: [PATCH 2/3] Add Cognito Authentication to Mlflow UI
  mlflow/server/js/craco.config.js              |    1 +
  mlflow/server/js/package.json                 |    2 +
  .../server/js/src/common/utils/FetchUtils.js  |   35 +-
+ mlflow/server/js/src/common/utils/Utils.js    |   12 +-
  .../src/experiment-tracking/components/App.js |   15 +-
+ .../src/model-registry/constant-overrides.js  |    1 +
  mlflow/server/js/yarn.lock                    | 4000 ++++++++++++++++-
- 5 files changed, 4025 insertions(+), 28 deletions(-)
+ 7 files changed, 4032 insertions(+), 34 deletions(-)
 
 diff --git a/mlflow/server/js/craco.config.js b/mlflow/server/js/craco.config.js
-index 38e717c1c..7c7893380 100644
+index 38e717c..7c78933 100644
 --- a/mlflow/server/js/craco.config.js
 +++ b/mlflow/server/js/craco.config.js
 @@ -263,6 +263,7 @@ module.exports = function ({ env }) {
@@ -63,7 +29,7 @@ index 38e717c1c..7c7893380 100644
          return webpackConfig;
        },
 diff --git a/mlflow/server/js/package.json b/mlflow/server/js/package.json
-index 3ebbcabc4..2c764b418 100644
+index 3ebbcab..2c764b4 100644
 --- a/mlflow/server/js/package.json
 +++ b/mlflow/server/js/package.json
 @@ -9,12 +9,14 @@
@@ -82,7 +48,7 @@ index 3ebbcabc4..2c764b418 100644
      "buffer": "^6.0.3",
      "bytes": "3.0.0",
 diff --git a/mlflow/server/js/src/common/utils/FetchUtils.js b/mlflow/server/js/src/common/utils/FetchUtils.js
-index d40798f7f..86cf48504 100644
+index d40798f..86cf485 100644
 --- a/mlflow/server/js/src/common/utils/FetchUtils.js
 +++ b/mlflow/server/js/src/common/utils/FetchUtils.js
 @@ -4,6 +4,16 @@ import yaml from 'js-yaml';
@@ -162,8 +128,31 @@ index d40798f7f..86cf48504 100644
    const headers = {
      'Content-Type': 'application/json; charset=utf-8',
      ...getDefaultHeaders(document.cookie),
+diff --git a/mlflow/server/js/src/common/utils/Utils.js b/mlflow/server/js/src/common/utils/Utils.js
+index e584980..17362d2 100644
+--- a/mlflow/server/js/src/common/utils/Utils.js
++++ b/mlflow/server/js/src/common/utils/Utils.js
+@@ -1055,12 +1055,12 @@ class Utils {
+   static getSupportPageUrl = () => SupportPageUrl;
+ 
+   static getIframeCorrectedRoute(route) {
+-    if (window.self !== window.top || window.isTestingIframe) {
+-      // If running in an iframe, include the parent params and assume mlflow served at #
+-      const parentHref = window.parent.location.href;
+-      const parentHrefBeforeMlflowHash = parentHref.split('#')[0];
+-      return `${parentHrefBeforeMlflowHash}#mlflow${route}`;
+-    }
++    // if (window.self !== window.top || window.isTestingIframe) {
++    //   // If running in an iframe, include the parent params and assume mlflow served at #
++    //   const parentHref = window.parent.location.href;
++    //   const parentHrefBeforeMlflowHash = parentHref.split('#')[0];
++    //   return `${parentHrefBeforeMlflowHash}#mlflow${route}`;
++    // }
+     return `./#${route}`; // issue-2213 use relative path in case there is a url prefix
+   }
+ 
 diff --git a/mlflow/server/js/src/experiment-tracking/components/App.js b/mlflow/server/js/src/experiment-tracking/components/App.js
-index 7946ccae0..9eb2f9ebe 100644
+index 7946cca..9eb2f9e 100644
 --- a/mlflow/server/js/src/experiment-tracking/components/App.js
 +++ b/mlflow/server/js/src/experiment-tracking/components/App.js
 @@ -25,6 +25,19 @@ import { MetricPage } from './MetricPage';
@@ -192,8 +181,14 @@ index 7946ccae0..9eb2f9ebe 100644
  
 -export default connect(mapStateToProps)(App);
 +export default withAuthenticator(connect(mapStateToProps)(App));
+diff --git a/mlflow/server/js/src/model-registry/constant-overrides.js b/mlflow/server/js/src/model-registry/constant-overrides.js
+index e69de29..51569e9 100644
+--- a/mlflow/server/js/src/model-registry/constant-overrides.js
++++ b/mlflow/server/js/src/model-registry/constant-overrides.js
+@@ -0,0 +1 @@
++// Overwirte constants
 diff --git a/mlflow/server/js/yarn.lock b/mlflow/server/js/yarn.lock
-index 11454c0b6..1db40df07 100644
+index 11454c0..1db40df 100644
 --- a/mlflow/server/js/yarn.lock
 +++ b/mlflow/server/js/yarn.lock
 @@ -112,6 +112,3145 @@ __metadata:
@@ -4789,25 +4784,6 @@ index 11454c0b6..1db40df07 100644
  "zero-crossings@github:plotly/zero-crossings#v1.1.0":
    version: 1.1.0
    resolution: "zero-crossings@https://github.com/plotly/zero-crossings.git#commit=24cb54b1e35a387b78c2794b14627d6effe0c9d5"
--- 
-2.37.1 (Apple Git-137.1)
-
-
-From 3dc2b72f90e66dc0f6df90dfe87b7e5ac35323a8 Mon Sep 17 00:00:00 2001
-From: Paolo Di Francesco <frpaolo@amazon.at>
-Date: Thu, 16 Feb 2023 07:22:44 +0100
-Subject: [PATCH 3/3] No empy files
-
----
- mlflow/server/js/src/model-registry/constant-overrides.js | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/mlflow/server/js/src/model-registry/constant-overrides.js b/mlflow/server/js/src/model-registry/constant-overrides.js
-index e69de29bb..51569e91a 100644
---- a/mlflow/server/js/src/model-registry/constant-overrides.js
-+++ b/mlflow/server/js/src/model-registry/constant-overrides.js
-@@ -0,0 +1 @@
-+// Overwirte constants
 -- 
 2.37.1 (Apple Git-137.1)
 
