@@ -1,4 +1,4 @@
-# Secure MLFlow in AWS with native AWS services
+# Secure MLflow in AWS with native AWS services
 
 ## Custom authentication and authorization on MLFlow
 
