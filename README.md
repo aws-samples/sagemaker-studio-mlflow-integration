@@ -1,13 +1,13 @@
 # Secure MLflow in AWS with native AWS services
 
-## Custom authentication and authorization on MLFlow
+## Custom authentication and authorization on MLflow
 
 This sample shows how to do the following:
 
-* How to deploy MLFlow on a serverless architecture (we build on top of [running MLFlow on Fargate](https://github.com/aws-samples/amazon-sagemaker-mlflow-fargate))
-* How to expose a MLFlow server via private integrations to an Amazon API Gateway (we build on top of [running MLFlow on AWS](https://github.com/aws-samples/aws-mlflow-sagemaker-cdk))
-* How to add authentication and authorization for programmatic access and browser access to MLFlow
-* How to access MLFlow via SageMaker using SageMaker Execution Roles
+* How to deploy MLflow on a serverless architecture (we build on top of [running MLflow on Fargate](https://github.com/aws-samples/amazon-sagemaker-mlflow-fargate))
+* How to expose a MLflow server via private integrations to an Amazon API Gateway (we build on top of [running MLflow on AWS](https://github.com/aws-samples/aws-mlflow-sagemaker-cdk))
+* How to add authentication and authorization for programmatic access and browser access to MLflow
+* How to access MLflow via SageMaker using SageMaker Execution Roles
 
 Due to its modularity, this sample can be extended in a number of ways, and we will provide guidance on how to do so.
 
@@ -15,15 +15,15 @@ Due to its modularity, this sample can be extended in a number of ways, and we w
 ## Architecture
 
 This sample is made of 4 different stacks:
-* [`MLFlowVPCStack`](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cdk/lib/mlflow-vpc-stack.ts)
-    * deploys a MLFLow tracking server on a serverless infrastructure running on ECS and Fargate on a private subnet
+* [`MLflowVPCStack`](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cdk/lib/mlflow-vpc-stack.ts)
+    * deploys a MLfLow tracking server on a serverless infrastructure running on ECS and Fargate on a private subnet
     * deploys an Aurora Serverless database for the data store and S3 for the artifact store.
 * [`RestApiGatewayStack`](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cdk/lib/rest-api-gateway-stack.ts)
     * exposes the MLFlow server via a PrivateLink to an REST API Gateway.
     * deploys a Cognito User Pool to manage the users accessing the UI.
     * deploy a Lambda Authorizer to verify the JWT token with the Cognito User Pool ID keys and returns IAM policies to allow or deny a request.
     * adds IAM Authorizer. This will be applied to the 
-* [`AmplifyMLFlowStack`](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cdk/lib/amplify-mlflow-stack.ts)
+* [`AmplifyMLflowStack`](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cdk/lib/amplify-mlflow-stack.ts)
     * creates an app with CI/CD capability to deploy the MLFLow UI
 * [`SageMakerStudioUserStack`](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cdk/lib/sagemaker-studio-user-stack.ts)
     * deploys a SageMaker Studio domain (if not existing).
@@ -35,7 +35,7 @@ This sample is made of 4 different stacks:
 Our proposed architecture is shown Fig. 1
 
 ![Architecture](./images/mlflow-architecture.png)
-*Fig. 1 - MLFlow on AWS architecture diagram*
+*Fig. 1 - MLflow on AWS architecture diagram*
 
 ## Prerequisites
 * access to an AWS account with Admin permissions.
@@ -44,9 +44,9 @@ Our proposed architecture is shown Fig. 1
 
 ### Create and configure AWS Cloud9 environment
 
-Log into the AWS Management Console and search for the [Cloud9](https://aws.amazon.com/cloud9/) in the search bar.
+Log into the AWS Management Console and search for [Cloud9](https://aws.amazon.com/cloud9/) in the search bar.
 Click Cloud9 and create an AWS Cloud9 environment region based on Amazon Linux 2.
-For the instance type, we tested with a `t3.medium`, but you can very likely use a Free-Tier eligible instance.
+For the instance type, we tested with a `t3.large`, but you can very likely use a Free-Tier eligible instance.
 
 ### Provisioning AWS resources using the AWS CDK
 
