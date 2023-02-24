@@ -86,6 +86,7 @@ We provide you a patch to be applied on top of MLflow `1.30.0` that adds Amplify
 The patch we provided can be checked [here](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cognito.patch) and it will enable a login flow backed by Amazon Cognito as shown in Fig. 2.
 
 ```bash
+cd ~/environment/sagemaker-studio-mlflow-integration/
 git clone --depth 1 --branch v1.30.0 https://github.com/mlflow/mlflow.git
 cd mlflow
 git am ../cognito.patch
