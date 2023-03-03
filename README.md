@@ -290,7 +290,7 @@ Once done, you can destroy the CDK stack by running
 
 ```bash
 cd ~/environment/aws-mlflow-sagemaker-cdk/cdk
-./destroy.sh
+cdk destroy --all
 ```
 
 At the prompt, enter `y`.
