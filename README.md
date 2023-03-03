@@ -142,11 +142,13 @@ cdk deploy --all --require-approval never
 ## Cognito User Pool and Lambda Authorizer
 
 We have provided a script that will populate the Cognito User Pool with 3 users, each belonging to a different group.
-To execute the script, please run the following command (please make sure you change the default password).
+To execute the script, please run the following command.
+The script will prompt you to enter your desired password.
+Please ensure that the password you pick respects the password policy defined for [Cognito](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/449d5557ee6edeb4c7f17ce5f2dfa310e5684ee6/cdk/lib/rest-api-gateway-stack.ts#L40)
 
 ```bash
 cd ~/environment/sagemaker-studio-mlflow-integration/src/cognito/
-python add_users_and_groups.py --password '<ChangeMe123!>'
+python add_users_and_groups.py
 ```
 All three users gets created with the same default password. To check the script code [here](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/src/cognito/add_users_and_groups.py).
 
