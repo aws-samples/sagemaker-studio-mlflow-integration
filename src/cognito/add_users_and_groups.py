@@ -1,7 +1,7 @@
 import boto3
 import os
-import argparse
-    
+import getpass
+
 cognito_client = boto3.client('cognito-idp')
 user_pools = cognito_client.list_user_pools(MaxResults=60)['UserPools']
 user_pool_id = [user_pool['Id'] for user_pool in user_pools if user_pool['Name']=='mlflow-user-pool'][0]
@@ -32,10 +32,6 @@ for user in list_users:
 
         
 if __name__=="__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--password', type=str, default='ChangeMe123!')
-    args, _ = parser.parse_known_args()
-    
     # Create groups
     for group in groups:
         if group in existing_group_names:
@@ -59,11 +55,11 @@ if __name__=="__main__":
                 Username=username,
                 #TemporaryPassword=args.password
             )
-            
+            pwd = getpass.getpass(prompt = f"Enter the password for {username}: ")
             cognito_client.admin_set_user_password(
                 UserPoolId=user_pool_id,
                 Username=username,
-                Password=args.password,
+                Password=pwd,
                 Permanent=True # does not force a user to change the password
             )
             
