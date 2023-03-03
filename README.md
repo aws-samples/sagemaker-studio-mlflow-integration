@@ -150,7 +150,7 @@ Please ensure that the password you pick respects the password policy defined fo
 cd ~/environment/sagemaker-studio-mlflow-integration/src/cognito/
 python add_users_and_groups.py
 ```
-All three users gets created with the same default password. To check the script code [here](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/src/cognito/add_users_and_groups.py).
+To check the script code [here](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/src/cognito/add_users_and_groups.py).
 
 After running the script, if you check the Cognito User Pool in the console you should see the three users created
 
