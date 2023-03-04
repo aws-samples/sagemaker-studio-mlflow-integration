@@ -241,11 +241,13 @@ This is an extension for Jupyter Lab that allows you to load any webpage as an i
 1. node version > 14.x
 1. jupyter lab version 3.x (make sure SageMaker Studio Jupyter deploys the version 3 - if you have deployed the SageMaker Studio via the CDK in this repo, everything is fine)
 
-Replace in `domain.json` your MLFlow domain (if you have followed the deployment guide, it looks like `https://<BRANCH>.<CUSTOM-SUBDOMAIN>.amplifyapp.com`. You can use the following command
+Go to `src/domain.json` and replace the domain of your MLflow UI.
+If you have deployed MLflow following this guide, you can use the code snippet below to ease the string replacement from a new terminal window in SageMaker Studio.
 
 ```bash
-cd ~/environment/sagemaker-studio-mlflow-integration/aws-iframe-jupyter-extension/
-sed -i 's/<REPLACE-ME>/'"https:\/\/<BRANCH>.<CUSTOM-SUBDOMAIN>.amplifyapp.com"'/' src/domain.json
+cd /home/sagemaker-user/sagemaker-studio-mlflow-integration/aws-iframe-jupyter-extension/
+export APP_ID=$(aws amplify list-apps --query 'apps[?name==`Mlflow-UI`].appId' --output text)
+sed -i "s/<YOUR-AMPLIFY-APP-ID>/$APP_ID/" src/domain.json
 ```
 
 ### Build and install instructions
@@ -299,5 +301,5 @@ At the prompt, enter `y`.
 
 ## Conclusion
 
-We have shown how you can add authentication and authorization to a single tenent MLFlow serverless installation with minimal code changes to MLFlow.
-The highlight of this exercise is the authentication to an MLFlow tracking server via IAM Roles within SageMaker, leveraging the security the IAM carries with it.
+We have shown how you can add authentication and authorization to a single tenent MLFlow serverless installation with minimal code changes to MLflow.
+The highlight of this exercise is the authentication to an MLflow tracking server via IAM Roles within SageMaker, leveraging the security the IAM carries with it.
