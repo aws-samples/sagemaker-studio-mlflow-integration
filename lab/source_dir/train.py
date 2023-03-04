@@ -21,21 +21,10 @@ from smexperiments.tracker import Tracker
 
 logging.basicConfig(level=logging.INFO)
 
-def retrieve_credentials(region_name, secret_name):
-    session = boto3.session.Session()
-    client = session.client(
-        service_name='secretsmanager',
-        region_name=region_name
-    )
-    
-    kwarg = {'SecretId': secret_name}
-    secret = client.get_secret_value(**kwarg)
-    credentials = {}
-
-    credentials['username'] = json.loads(secret['SecretString'])['username']
-    credentials['password'] = json.loads(secret['SecretString'])['password']
-    
-    return credentials
+tracking_uri = os.environ.get('MLFLOW_TRACKING_URI')
+experiment_name = os.environ.get('MLFLOW_EXPERIMENT_NAME')
+mlflow_amplify_ui = os.environ.get('MLFLOW_AMPLIFY_UI_URI')
+user = os.environ.get('MLFLOW_USER')
 
 def print_auto_logged_info(r):
     tags = {k: v for k, v in r.data.tags.items()}
@@ -48,13 +37,6 @@ def print_auto_logged_info(r):
     
 if __name__ =='__main__':
     parser = argparse.ArgumentParser()
-    # MLflow related parameters
-    parser.add_argument("--tracking_uri", type=str)
-    parser.add_argument("--experiment_name", type=str)
-    parser.add_argument("--mlflow_amplify_ui", type=str)
-    
-    parser.add_argument("--region", type=str, default='us-west-2')
-    parser.add_argument("--secret_name", type=str)
     # hyperparameters sent by the client are passed as command-line arguments to the script.
     # to simplify the demo we don't use all sklearn RandomForest hyperparameters
     parser.add_argument('--n-estimators', type=int, default=10)
@@ -82,17 +64,11 @@ if __name__ =='__main__':
     y_train = train_df[args.target]
     y_test = test_df[args.target]
 
+    region = os.environ.get('AWS_DEFAULT_REGION')
     
-    # sets the header Authentication: Basic <credentials>
-    #credentials = retrieve_credentials(args.region, args.secret_name)
-    #os.environ['MLFLOW_TRACKING_USERNAME'] = credentials['username']
-    #os.environ['MLFLOW_TRACKING_PASSWORD'] = credentials['password']
-    os.environ['AWS_DEFAULT_REGION'] = args.region
-    os.environ["MLFLOW_TRACKING_AWS_SIGV4"] = "true"
-
     # set remote mlflow server
-    mlflow.set_tracking_uri(args.tracking_uri)
-    experiment = mlflow.set_experiment(args.experiment_name)
+    mlflow.set_tracking_uri(tracking_uri)
+    experiment = mlflow.set_experiment(experiment_name)
 
     mlflow.autolog()
 
@@ -131,9 +107,9 @@ if __name__ =='__main__':
         # Overwrite system tags
         mlflow.set_tags(
             {
-                'mlflow.source.name': f"https://{args.region}.console.aws.amazon.com/sagemaker/home?region={args.region}#/jobs/{job_name}",
+                'mlflow.source.name': f"https://{region}.console.aws.amazon.com/sagemaker/home?region={region}#/jobs/{job_name}",
                 'mlflow.source.type': 'JOB',
-                'mlflow.user': args.user
+                'mlflow.user': user
             }
         )
         # Shovel all SageMaker related data into mlflow
@@ -150,7 +126,7 @@ if __name__ =='__main__':
     tracker_parameters = {
             "run_id": run_id,
             "experiment_id": experiment_id,
-            "mlflow-run-url": f"{args.mlflow_amplify_ui}/#/experiments/{experiment_id}/runs/{run_id}"
+            "mlflow-run-url": f"{mlflow_amplify_ui}/#/experiments/{experiment_id}/runs/{run_id}"
         }
     try:
         with Tracker.load() as tracker:
