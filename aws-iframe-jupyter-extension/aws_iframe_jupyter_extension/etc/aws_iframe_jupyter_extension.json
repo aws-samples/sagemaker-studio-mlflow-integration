@@ -1,7 +1,0 @@
-{
-  "NotebookApp": {
-    "nbserver_extensions": {
-      "aws_jupyter_proxy": true
-    }
-  }
-}
