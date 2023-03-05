@@ -1,8 +1,0 @@
-/node_modules
-coverage
-.DS_Store
-/lib
-*.tsbuildinfo
-/build
-.ipynb_checkpoints/
-*.egg-info/
