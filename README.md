@@ -59,9 +59,21 @@ git clone https://github.com/aws-samples/sagemaker-studio-mlflow-integration.git
 
 #### Setting the expected ENV variables
 
+The CDK script expects the following ENV variables to be set
+
+```bash
+AWS_REGION=<region-where-you-want-to-deploy>
+AWS_ACCOUNT=<AWS-account-where-you-want-to-deploy>
+```
+
+If you would like to use an existing SageMaker Studio domain, please set this ENV variable
+
+```bash
+DOMAIN_ID=<your-existing-sagemaker-studio-domain-id>
+```
+
 The default region used by the CDK app is `us-west-2`.
-If you are already working in `us-west-2` you can skip this section.
-However, you can change the default region by setting up the `AWS_REGION` environment variable.
+You can change the default region by setting up the `AWS_REGION` environment variable.
 When working on Cloud9, you can specify the same region where your Cloud9 environment is running as follow:
 
 ```bash

@@ -16,15 +16,23 @@ export class AmplifyMlflowStack extends cdk.Stack {
     cognitoUserPool: cognito.UserPool,
     cognitoIdentityPool: IdentityPool,
     cognitoUserPoolClient: cognito.UserPoolClient,
+    sagemakerStudioDomainId: string,
     props?: cdk.StackProps
   ) {
     super(scope, id, props);
-    
+
     const repo = new codecommit.Repository(this, 'Repository', {
         repositoryName: 'mlflow-1.30.0-patched',
         description: 'MLflow v1.30.0 with cognito patch', // optional property
         code: codecommit.Code.fromDirectory('../mlflow/mlflow/server/js', 'main')
     });
+
+    const AccessControlAllowOriginHeader: amplify.CustomResponseHeader = {
+        headers: {
+            'Access-Control-Allow-Origin': `https://${sagemakerStudioDomainId}.studio.${this.region}.sagemaker.aws`,
+        },
+        pattern: '*',
+    };
 
     const amplifyApp = new amplify.App(this, 'Mlflow-UI', {
         sourceCodeProvider: new amplify.CodeCommitSourceCodeProvider({ repository: repo }),
@@ -66,11 +74,12 @@ export class AmplifyMlflowStack extends cdk.Stack {
             'AMPLIFY_USERPOOL_ID': cognitoUserPool.userPoolId,
             'AMPLIFY_IDENTITYPOOL_ID': cognitoIdentityPool.identityPoolId, 
             'REACT_APP_COGNITO_USER_POOL_CLIENT_ID': cognitoUserPoolClient.userPoolClientId
-        }
+        },
+        customResponseHeaders: [AccessControlAllowOriginHeader]
     })
     
     amplifyApp.addBranch('main')
-    
+
     // Rule for static files
     amplifyApp.addCustomRule({
         source: '/static-files/<*>',

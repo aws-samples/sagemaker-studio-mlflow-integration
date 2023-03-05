@@ -24,7 +24,7 @@ const restApiGatewayStack = new RestApiGatewayStack(
     { env: env }
 );
 
-new SageMakerStudioUserStack(
+const sagemakerStudioUserStack = new SageMakerStudioUserStack(
     app,
     'SageMakerStudioUserStack',
     RestApiGatewayStack.name,
@@ -40,5 +40,6 @@ new AmplifyMlflowStack(
     restApiGatewayStack.userPool,
     restApiGatewayStack.identityPool,
     restApiGatewayStack.userPoolClient,
+    sagemakerStudioUserStack.sagemakerStudioDomainId,
     { env: env }
 )

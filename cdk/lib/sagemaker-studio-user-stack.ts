@@ -30,6 +30,8 @@ const sagemakerArnRegionAccountMapping = {
 }
 
 export class SageMakerStudioUserStack extends cdk.Stack {
+  public readonly sagemakerStudioDomainId: string;
+  
     constructor(
         scope: Construct,
         id: string,
@@ -208,6 +210,8 @@ export class SageMakerStudioUserStack extends cdk.Stack {
             vpcId: defaultVpc.vpcId,
             subnetIds: subnetIds,
           });
+          
+          this.sagemakerStudioDomainId = cfnStudioDomain.attrDomainId
 
           const cfnAdminProfile = new sagemaker.CfnUserProfile(this, 'MyCfnAdminProfile', {
             domainId: cfnStudioDomain.attrDomainId,
@@ -237,6 +241,7 @@ export class SageMakerStudioUserStack extends cdk.Stack {
           );
         }
         else {
+          this.sagemakerStudioDomainId = domainId
           const cfnAdminProfile = new sagemaker.CfnUserProfile(this, 'MyCfnAdminProfile', {
             domainId: domainId,
             userProfileName: 'mlflow-admin',
