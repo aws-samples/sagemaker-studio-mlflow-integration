@@ -1,4 +1,4 @@
-mlflow==1.30.0
+mlflow==2.2.1
 requests_auth_aws_sigv4
 matplotlib
 sagemaker-experiments

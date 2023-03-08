@@ -96,6 +96,7 @@ MLflow UI does not support any login workflow, nonetheless mechanisms to set the
 Amplify provides libraries that can be used to quickly add a login workflow, and to easily manage the lifecycle of the authentication tokens.
 We provide you a patch to be applied on top of MLflow `2.2.1` that adds Amplify React Components for authentication and how to add `Authorization` header with a `Bearer` token for every backend API call.
 The patch we provided can be checked [here](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cognito-mlflow_v2-2-1.patch) and it will enable a login flow backed by Amazon Cognito as shown in Fig. 2.
+**Note: we also provide a patch for MLflow `1.30.0`. If you want to install that version, you need to ensure mlflow `1.30.0` here](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cognito-mlflow_v1-30-0.patch) in stalled throughout this sample, and you adapt the lab sample to work with that same version as the SDK for deploying a model to SageMaker has changed**
 
 ```bash
 cd ~/environment/sagemaker-studio-mlflow-integration/
@@ -201,31 +202,51 @@ Provisioning a new SageMaker Studio domain will do the following operations:
 
 ### Push the `mlflow-pyfunc` container to ECR
 
+#### Ensure Python 3.8 (or greater) is installed
+
 In order to deploy to SageMaker an mlflow model, you need to create a serving container that implements what the SageMaker runtime expects to find.
-MLFlow makes this effor easier by providing a CLI command that build the image locally and pushes to your ECR the image.
+MLflow makes this effor easier by providing a CLI command that build the image locally and pushes to your ECR the image.
+Most recent versions of MLflow have dependencies on `Python 3.8`.
 
 ```bash
-# install the libraries
-pip install mlflow==2.2.1 boto3
+python --version
+```
 
+If running this sample on Cloud9, you need to ensure you have Python `3.8` installed.
+You can follow these instructions on how to do it
+```bash
+sudo yum install -y amazon-linux-extras
+sudo amazon-linux-extras enable python3.8
+sudo yum install -y python3.8
+```
+
+#### Push the `mlflow-pyfunc` container to ECR
+
+Il on Cloud9 run the following (after installing Python 3.8)
+```bash
+# install the libraries
+pip3.8 install mlflow==2.2.1 boto3 # or pip install mlflow==2.2.1 boto3 if your default pip comes alongside a python version >= 3.8
+```
+
+```bash
 # build and push the container to ECR into your account
 mlflow sagemaker build-and-push-container
 ```
 
-### Accessing the MLFlow UI
-Before accessing the MLFlow UI, we need to ensure the the first build got executed.
-Navigate to the Amplify console, and select the `MLFlow-UI` app that we have created.
+### Accessing the MLflow UI
+Before accessing the MLflow UI, we need to ensure the the first build got executed.
+Navigate to the Amplify console, and select the `MLflow-UI` app that we have created.
 Then execute the first build as shown in Fig. 4.
 
 ![AmplifyFirstBuild](./images/amplify-run-first-build.png)
-*Fig. 4 - Execute the first build for the MLFlow UI*
+*Fig. 4 - Execute the first build for the MLflow UI*
 
 Once the build completes (might take some time) you can access the MLFlow UI from the link provided by Amplify as shown in Fig. 5.
 
 ![AmplifyMLflowUI](./images/amplify-mlflow-ui-link.png)
-*Fig. 5 - Retrieve the URL of the MLFlow UI*
+*Fig. 5 - Retrieve the URL of the MLflow UI*
 
-### MLFlow / Amazon SageMaker Studio integration lab
+### MLflow / Amazon SageMaker Studio integration lab
 
 In the AWS console, navigate to Amazon SageMaker Studio and open Studio for the `mlflow-admin` user as shown in the pictures below.
 
@@ -242,8 +263,8 @@ git clone https://github.com/aws-samples/sagemaker-studio-mlflow-integration.git
 ```
 
 Navigate to the `./sagemaker-studio-mlflow-integration/lab/` folder and open the open the `sagemaker_studio_and_mlflow.ipynb` notebook.
-You can see how to train in Amazon SageMaker and store the resulting models in MLFlow after retrieving the credentials at runtime and how to deploy models stored in Amazon SageMaker endpoints using the MLFlow SDK.
-Furthermore, the lab shows how you can enrich MLFlow metadata with SageMaker metadata, and vice versa, by storing MFlow specifics in SageMaker via SageMaker Experiments SDK and visualize them in the SageMaker Studio UI.
+You can see how to train in Amazon SageMaker and store the resulting models in MLflow after retrieving the credentials at runtime and how to deploy models stored in Amazon SageMaker endpoints using the MLflow SDK.
+Furthermore, the lab shows how you can enrich MLflow metadata with SageMaker metadata, and vice versa, by storing MFlow specifics in SageMaker via SageMaker Experiments SDK and visualize them in the SageMaker Studio UI.
 
 ## Render MLflow within SageMaker Studio
 
@@ -264,11 +285,11 @@ Once successfully installed, from the SageMaker Studio menu, `View`->`Activate C
 *Fig. 10 - Open the jupyterlab-iframe dialog*
 
 Finally, set the MLflow UI URL generated by Amplify and open the tab.
-You can now access MLFlow UI without leaving the SageMaker Studio UI using the same set of credentials you have stored in Amazon Cognito as shown in Fig. 11
+You can now access MLflow UI without leaving the SageMaker Studio UI using the same set of credentials you have stored in Amazon Cognito as shown in Fig. 11
 
 ![studio-iframe-mlflow](./images/studio-iframe-mlflow.png)
 
-*Fig. 11 - Access MLFlow UI from within SageMaker Studio*
+*Fig. 11 - Access MLflow UI from within SageMaker Studio*
 
 ## Cleanup
 
@@ -285,5 +306,5 @@ At the prompt, enter `y`.
 
 ## Conclusion
 
-We have shown how you can add authentication and authorization to a single tenent MLFlow serverless installation with minimal code changes to MLflow.
+We have shown how you can add authentication and authorization to a single tenent MLflow serverless installation with minimal code changes to MLflow.
 The highlight of this exercise is the authentication to an MLflow tracking server via IAM Roles within SageMaker, leveraging the security the IAM carries with it.
