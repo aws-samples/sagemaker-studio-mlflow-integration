@@ -96,7 +96,7 @@ export class MLflowVpcStack extends cdk.Stack {
       }
     });
 
-    // 👇 DB SecurityGroup
+    // DB SecurityGroup
     const dbClusterSecurityGroup = new ec2.SecurityGroup(this, 'DBClusterSecurityGroup', { vpc: this.vpc });
     dbClusterSecurityGroup.addIngressRule(ec2.Peer.ipv4(cidr), ec2.Port.tcp(dbPort));
 
@@ -106,6 +106,7 @@ export class MLflowVpcStack extends cdk.Stack {
       engine: 'aurora-mysql',
       engineVersion: '5.7.12',
       databaseName: dbName,
+      deletionProtection: false,
       masterUsername: databaseCredentialsSecret.secretValueFromJson('username').toString(),
       masterUserPassword: databaseCredentialsSecret.secretValueFromJson('password').toString(),
       dbSubnetGroupName: dbSubnetGroup.dbSubnetGroupName,
@@ -117,7 +118,8 @@ export class MLflowVpcStack extends cdk.Stack {
       },
       vpcSecurityGroupIds: [
         dbClusterSecurityGroup.securityGroupId
-      ]
+      ],
+      removalPolicy: cdk.RemovalPolicy.DESTROY // Delete everything
     };
 
     // 👇 RDS Cluster 
