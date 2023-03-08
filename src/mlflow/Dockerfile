@@ -1,11 +1,7 @@
-FROM --platform=linux/amd64 amazonlinux:2
+FROM python:3.9.0
 
-RUN yum install -y amazon-linux-extras
-RUN amazon-linux-extras install python3.8
-RUN ln -s /usr/bin/python3.8 /usr/bin/python3
-RUN python3 -m pip install --upgrade pip
-RUN python3 -m pip install \
-    mlflow==1.30.0\
+RUN pip install \
+    mlflow==2.2.1\
     boto3 \
     pymysql==1.0.2
 

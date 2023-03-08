@@ -45,7 +45,7 @@ export class RestApiGatewayStack extends cdk.Stack {
         requireSymbols: true,
       },
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
-      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
     
     this.identityPool = new IdentityPool(this, 'mlflow-identity-pool', {
