@@ -94,14 +94,14 @@ echo "export DOMAIN_ID=${DOMAIN_ID}" | tee -a ~/.bash_profile
 
 MLflow UI does not support any login workflow, nonetheless mechanisms to set the proper headers to authenticated API calls against a backend service.
 Amplify provides libraries that can be used to quickly add a login workflow, and to easily manage the lifecycle of the authentication tokens.
-We provide you a patch to be applied on top of MLflow `1.30.0` that adds Amplify React Components for authentication and how to add `Authorization` header with a `Bearer` token for every backend API call.
-The patch we provided can be checked [here](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cognito.patch) and it will enable a login flow backed by Amazon Cognito as shown in Fig. 2.
+We provide you a patch to be applied on top of MLflow `2.2.1` that adds Amplify React Components for authentication and how to add `Authorization` header with a `Bearer` token for every backend API call.
+The patch we provided can be checked [here](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cognito-mlflow_v2-2-1.patch) and it will enable a login flow backed by Amazon Cognito as shown in Fig. 2.
 
 ```bash
 cd ~/environment/sagemaker-studio-mlflow-integration/
-git clone --depth 1 --branch v1.30.0 https://github.com/mlflow/mlflow.git
+git clone --depth 1 --branch v2.2.1 https://github.com/mlflow/mlflow.git
 cd mlflow
-git am ../cognito.patch
+git am ../cognito-mlflow_v2-2-1.patch
 ```
 
 ![MLflowCognito](./images/mlflow-cognito.png)
@@ -206,7 +206,7 @@ MLFlow makes this effor easier by providing a CLI command that build the image l
 
 ```bash
 # install the libraries
-pip install mlflow==1.30.0 boto3
+pip install mlflow==2.2.1 boto3
 
 # build and push the container to ECR into your account
 mlflow sagemaker build-and-push-container

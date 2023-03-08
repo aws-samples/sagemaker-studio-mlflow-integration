@@ -22,8 +22,8 @@ export class AmplifyMlflowStack extends cdk.Stack {
     super(scope, id, props);
 
     const repo = new codecommit.Repository(this, 'Repository', {
-        repositoryName: 'mlflow-1.30.0-patched',
-        description: 'MLflow v1.30.0 with cognito patch', // optional property
+        repositoryName: 'mlflow-2.2.1-patched',
+        description: 'MLflow v2.2.1 with cognito patch', // optional property
         code: codecommit.Code.fromDirectory('../mlflow/mlflow/server/js', 'main')
     });
 
