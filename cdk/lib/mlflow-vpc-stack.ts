@@ -130,6 +130,7 @@ export class MLflowVpcStack extends cdk.Stack {
     const cluster = new ecs.Cluster(this, "Fargate Cluster", {
       vpc: this.vpc,
       clusterName: clusterName,
+      containerInsights: true
     });
 
     // 👇 Cloud Map Namespace
@@ -189,7 +190,9 @@ export class MLflowVpcStack extends cdk.Stack {
       "mlflowTaskDef",
       {
         taskRole: taskrole,
-        family: "mlFlowStack"
+        family: "mlFlowStack",
+        cpu: 512,
+        memoryLimitMiB: 1024
       },
     );
 
@@ -210,8 +213,8 @@ export class MLflowVpcStack extends cdk.Stack {
       {
         containerName: "mlflowContainer",
         essential: true,
-        // memoryReservationMiB: 512,
-        // cpu: 512,
+        memoryReservationMiB: 1024,
+        cpu: 512,
         portMappings: [{
           containerPort: containerPort,
           protocol: ecs.Protocol.TCP,
