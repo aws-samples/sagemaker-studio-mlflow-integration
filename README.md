@@ -96,7 +96,7 @@ MLflow UI does not support any login workflow, nonetheless mechanisms to set the
 Amplify provides libraries that can be used to quickly add a login workflow, and to easily manage the lifecycle of the authentication tokens.
 We provide you a patch to be applied on top of MLflow `2.2.1` that adds Amplify React Components for authentication and how to add `Authorization` header with a `Bearer` token for every backend API call.
 The patch we provided can be checked [here](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cognito-mlflow_v2-2-1.patch) and it will enable a login flow backed by Amazon Cognito as shown in Fig. 2.
-**Note: we also provide a patch for MLflow `1.30.0`. If you want to install that version, you need to ensure mlflow `1.30.0` here](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cognito-mlflow_v1-30-0.patch) in stalled throughout this sample, and you adapt the lab sample to work with that same version as the SDK for deploying a model to SageMaker has changed**
+**Note: we also provide a patch for MLflow `1.30.0`. If you want to install that version, you need to ensure mlflow `1.30.0` [here](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cognito-mlflow_v1-30-0.patch) in stalled throughout this sample, and you adapt the lab sample to work with that same version as the SDK for deploying a model to SageMaker has changed**
 
 ```bash
 cd ~/environment/sagemaker-studio-mlflow-integration/
