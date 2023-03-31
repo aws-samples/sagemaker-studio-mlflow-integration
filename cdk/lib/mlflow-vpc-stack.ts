@@ -70,7 +70,8 @@ export class MLflowVpcStack extends cdk.Stack {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
-      encryption: s3.BucketEncryption.KMS_MANAGED
+      encryption: s3.BucketEncryption.KMS_MANAGED,
+      enforceSSL: true
     })
 
     // DB SubnetGroup
@@ -282,6 +283,7 @@ export class MLflowVpcStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
       //encryption: s3.BucketEncryption.KMS_MANAGED
+      enforceSSL: true
     })
 
     this.httpApiInternalNLB.logAccessLogs(accessLogs)
