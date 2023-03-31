@@ -11,6 +11,8 @@ import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import { CfnDBCluster, CfnDBSubnetGroup } from 'aws-cdk-lib/aws-rds';
 
+import { NagSuppressions } from 'cdk-nag'
+
 const { Protocol } = elbv2;
 const dbName = "mlflowdb"
 const dbPort = 5432
@@ -243,8 +245,10 @@ export class MLflowVpcStack extends cdk.Stack {
         vpc: this.vpc,
       }
     );
-    mlflowServiceSecGrp.connections.allowFromAnyIpv4(ec2.Port.tcp(containerPort));
-    mlflowServiceSecGrp.connections.allowFromAnyIpv4(ec2.Port.tcp(80));
+
+    mlflowServiceSecGrp.addIngressRule(ec2.Peer.ipv4(cidr), ec2.Port.tcp(containerPort), 'Allow internal access to the container port');
+    mlflowServiceSecGrp.addIngressRule(ec2.Peer.ipv4(cidr), ec2.Port.tcp(80), 'Allow internal access to the container port');
+
 
     // 👇 Fargate Services
     const mlflowService = new ecs.FargateService(this, "mlflowService", {
