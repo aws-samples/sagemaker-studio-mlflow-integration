@@ -273,6 +273,18 @@ export class MLflowVpcStack extends cdk.Stack {
         internetFacing: false,
       }
     );
+    
+    const accessLogs = new s3.Bucket(this, "accessLogs", {
+      versioned: false,
+      bucketName: `nlb-accesslogs-${this.account}-${this.region}`,
+      publicReadAccess: false,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+      //encryption: s3.BucketEncryption.KMS_MANAGED
+    })
+
+    this.httpApiInternalNLB.logAccessLogs(accessLogs)
 
     // 👇 ALB Listener
     this.httpApiListener = this.httpApiInternalNLB.addListener("httpapiListener", {
