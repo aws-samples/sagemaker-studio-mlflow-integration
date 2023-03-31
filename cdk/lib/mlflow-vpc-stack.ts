@@ -30,6 +30,7 @@ export class MLflowVpcStack extends cdk.Stack {
   public readonly httpApiInternalNLB: elbv2.NetworkLoadBalancer;
 
   readonly bucketName = `mlflow-${this.account}-${this.region}`
+  readonly accesslogBucketName = `accesslogs-${this.account}-${this.region}`
 
   constructor(
     scope: Construct, 
@@ -37,6 +38,12 @@ export class MLflowVpcStack extends cdk.Stack {
     props?: cdk.StackProps
   ) {
     super(scope, id, props);
+    
+    const logGroup = new logs.LogGroup(this, 'MyVpcLogGroup');
+
+    const flowLogsRole = new iam.Role(this, 'flowLogsRole', {
+      assumedBy: new iam.ServicePrincipal('vpc-flow-logs.amazonaws.com')
+    });
 
     // VPC
     this.vpc = new ec2.Vpc(this, 'MLFlowVPC', {
@@ -61,8 +68,24 @@ export class MLflowVpcStack extends cdk.Stack {
         },
       ],
     });
+    
+    new ec2.FlowLog(this, 'FlowLog', {
+      resourceType: ec2.FlowLogResourceType.fromVpc(this.vpc),
+      destination: ec2.FlowLogDestination.toCloudWatchLogs(logGroup, flowLogsRole)
+    });
+    
+    const accessLogs = new s3.Bucket(this, "accessLogs", {
+      versioned: false,
+      bucketName: this.accesslogBucketName,
+      publicReadAccess: false,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+      encryption: s3.BucketEncryption.KMS_MANAGED,
+      enforceSSL: true,
+    })
 
-    // S3 bucket
+    // mlflow S3 bucket
     const mlFlowBucket = new s3.Bucket(this, "mlFlowBucket", {
       versioned: false,
       bucketName: this.bucketName,
@@ -71,7 +94,9 @@ export class MLflowVpcStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
       encryption: s3.BucketEncryption.KMS_MANAGED,
-      enforceSSL: true
+      enforceSSL: true,
+      serverAccessLogsBucket: accessLogs,
+      serverAccessLogsPrefix: 'mlflow-server'
     })
 
     // DB SubnetGroup
@@ -122,6 +147,7 @@ export class MLflowVpcStack extends cdk.Stack {
       vpcSecurityGroupIds: [
         dbClusterSecurityGroup.securityGroupId
       ],
+      storageEncrypted: true,
       removalPolicy: cdk.RemovalPolicy.DESTROY // Delete everything
     };
 
@@ -147,6 +173,10 @@ export class MLflowVpcStack extends cdk.Stack {
       }
     );
 
+    const withoutPolicyUpdatesOptions: iam.WithoutPolicyUpdatesOptions = {
+      addGrantsToResources: false,
+    };
+
     // 👇 Fargate Task Role
     const taskrole = new iam.Role(this, "ecsTaskExecutionRole", {
       assumedBy: new iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
@@ -158,7 +188,10 @@ export class MLflowVpcStack extends cdk.Stack {
           statements:[
             new iam.PolicyStatement({
               effect: iam.Effect.ALLOW,
-              resources: [`arn:aws:s3:::${this.bucketName}`,`arn:aws:s3:::${this.bucketName}/*`],
+              resources: [
+                `arn:aws:s3:::${this.bucketName}`,
+                `arn:aws:s3:::${this.bucketName}/*`
+              ],
               actions: ["s3:*"]
             })
           ]
@@ -192,7 +225,8 @@ export class MLflowVpcStack extends cdk.Stack {
       this,
       "mlflowTaskDef",
       {
-        taskRole: taskrole,
+        taskRole: taskrole.withoutPolicyUpdates(withoutPolicyUpdatesOptions),
+        executionRole: taskrole.withoutPolicyUpdates(withoutPolicyUpdatesOptions),
         family: "mlFlowStack",
         cpu: 512,
         memoryLimitMiB: 1024
@@ -236,6 +270,13 @@ export class MLflowVpcStack extends cdk.Stack {
         logging: mlflowServiceLogDriver,
       });
 
+    NagSuppressions.addResourceSuppressions(mlflowServiceContainer, [
+      {
+        id: 'AwsSolutions-ECS2',
+        reason: 'ENV variables passed do not contain secrets'
+      },
+    ])
+
     // 👇 Security Group
     const mlflowServiceSecGrp = new ec2.SecurityGroup(
       this,
@@ -274,21 +315,8 @@ export class MLflowVpcStack extends cdk.Stack {
         internetFacing: false,
       }
     );
-    
-    const accessLogs = new s3.Bucket(this, "accessLogs", {
-      versioned: false,
-      bucketName: `nlb-accesslogs-${this.account}-${this.region}`,
-      publicReadAccess: false,
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
-      //encryption: s3.BucketEncryption.KMS_MANAGED
-      enforceSSL: true
-    })
 
-    this.httpApiInternalNLB.logAccessLogs(accessLogs)
-
-    // 👇 ALB Listener
+    // NLB Listener
     this.httpApiListener = this.httpApiInternalNLB.addListener("httpapiListener", {
       port: 80,
       protocol: Protocol.TCP,
@@ -318,6 +346,73 @@ export class MLflowVpcStack extends cdk.Stack {
       scaleInCooldown: cdk.Duration.seconds(60),
       scaleOutCooldown: cdk.Duration.seconds(60),
     });
+
+    NagSuppressions.addResourceSuppressions(mlflowTaskDefinition, [
+      {
+        id: 'AwsSolutions-ECS2',
+        reason: 'ENV variables passed do not contain secrets'
+      },
+    ])
+    
+    NagSuppressions.addResourceSuppressions(taskrole, [
+      {
+        id: 'AwsSolutions-IAM5',
+        reason: 'The task owns this bucket and it should have full permissions on the objects',
+        appliesTo: [`Resource::arn:aws:s3:::${this.bucketName}/*`]
+      },
+      {
+        id: 'AwsSolutions-IAM5',
+        reason: 'The task owns this bucket and it should have admin permissions on the objects',
+        appliesTo: ["Action::s3:*"]
+      },
+      {
+        id: 'AwsSolutions-IAM5',
+        reason: 'Action secretmanager::ListSecrets must be applied on a "*"',
+        appliesTo: ["Resource::*"]
+      },
+      {
+        id: 'AwsSolutions-IAM4',
+        reason: 'The task needs access to this managed policy',
+        appliesTo: ['Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy']
+      }
+    ]
+    )
+    
+    NagSuppressions.addResourceSuppressions(databaseCredentialsSecret, [
+      {
+        id: 'AwsSolutions-SMG4',
+        reason: 'MLflow does not support database credentials rotation'
+      }
+    ])
+    
+    NagSuppressions.addResourceSuppressions(accessLogs, [
+      {
+        id: 'AwsSolutions-S1',
+        reason: 'This is an access log bucket'
+      }
+    ])
+
+    NagSuppressions.addResourceSuppressions(rdsCluster, [
+      {
+        id: 'AwsSolutions-RDS11',
+        reason: 'Obfuscating the standard postgres port would make the solution less readable'
+      },
+      {
+        id: 'AwsSolutions-RDS10',
+        reason: 'This is a sample and we encourage users to clean up after trying the solution'
+      },
+      {
+        id: 'AwsSolutions-RDS6',
+        reason: 'MLflow does not support IAM authentication for Postgres'
+      }
+    ])
+
+    NagSuppressions.addResourceSuppressions(this.httpApiInternalNLB, [
+      {
+        id: 'AwsSolutions-ELB2',
+        reason: 'This is an internal-only NLB listening on port 80. Access logs for NLB only works for a TLS listener as per documentation in https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-access-logs.html'
+      }]
+    )
 
     new cdk.CfnOutput(this, "ALB Dns Name : ", {
       value: this.httpApiInternalNLB.loadBalancerDnsName,
