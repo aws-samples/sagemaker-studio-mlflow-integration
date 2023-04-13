@@ -97,6 +97,20 @@ export class SageMakerStudioUserStack extends cdk.Stack {
             })
           ],
         })
+        
+        const restApiModelApprover =  new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              resources: [
+                `arn:aws:execute-api:${this.region}:${this.account}:${restApiGateway.restApiId}/*/GET/*`,
+                `arn:aws:execute-api:${this.region}:${this.account}:${restApiGateway.restApiId}/*/POST/api/2.0/mlflow/runs/search`,
+                `arn:aws:execute-api:${this.region}:${this.account}:${restApiGateway.restApiId}/*/POST/api/2.0/mlflow/experiments/search`,
+              ],
+              actions: ["execute-api:Invoke"],
+            })
+          ],
+        })
 
         const restApiDenyPolicy = new iam.PolicyDocument({
           statements: [
