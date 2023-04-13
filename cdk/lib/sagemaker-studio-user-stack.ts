@@ -42,103 +42,103 @@ export class SageMakerStudioUserStack extends cdk.Stack {
     ){
         super(scope, id, props);
         
+        const retrieveAmplifyUrlPolicy = new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              resources: [`arn:*:amplify:${this.region}:${this.account}:apps/*`],
+              actions: ["amplify:ListApps"],
+            })
+          ],
+        })
+
+       const retrieveApiGatewayUrlPolicy = new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              resources: [`arn:*:cloudformation:${this.region}:${this.account}:stack/${httpGatewayStackName}/*`],
+              actions: ["cloudformation:DescribeStacks"],
+            })
+          ],
+        })
+
+        const restApiAdminPolicy = new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              resources: [
+                `arn:aws:execute-api:${this.region}:${this.account}:${restApiGateway.restApiId}/*/*/*`
+              ],
+              actions: ["execute-api:Invoke"],
+            })
+          ],
+        })
+
+        const s3bucketPolicy = new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              resources: ["arn:aws:s3:::*mlflow*"],
+              actions: ["s3:ListBucket","s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:PutObjectTagging", "s3:CreateBucket"],
+            })
+          ],
+        })
+
+        const restApiReaderPolicy =  new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              resources: [
+                `arn:aws:execute-api:${this.region}:${this.account}:${restApiGateway.restApiId}/*/GET/*`,
+                `arn:aws:execute-api:${this.region}:${this.account}:${restApiGateway.restApiId}/*/POST/api/2.0/mlflow/runs/search`,
+                `arn:aws:execute-api:${this.region}:${this.account}:${restApiGateway.restApiId}/*/POST/api/2.0/mlflow/experiments/search`
+              ],
+              actions: ["execute-api:Invoke"],
+            })
+          ],
+        })
+
+        const restApiDenyPolicy = new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              effect: iam.Effect.DENY,
+              resources: [
+                `arn:aws:execute-api:${this.region}:${this.account}:${restApiGateway.restApiId}/*/*/*`
+              ],
+              actions: ["execute-api:Invoke"],
+            })
+          ],
+        })
+
         // SageMaker Execution Role for admins
         const sagemakerAdminExecutionRole = new iam.Role(this, "sagemaker-mlflow-admin-role", {
-          assumedBy: new iam.ServicePrincipal("sagemaker.amazonaws.com"),
+          assumedBy: new iam.CompositePrincipal(
+            new iam.ServicePrincipal("sagemaker.amazonaws.com")
+          ),
           managedPolicies: [
             iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonSageMakerFullAccess")
           ],
           inlinePolicies: {
-            retrieveAmplifyUrl: new iam.PolicyDocument({
-              statements: [
-                new iam.PolicyStatement({
-                  effect: iam.Effect.ALLOW,
-                  resources: [`arn:*:amplify:${this.region}:${this.account}:apps/*`],
-                  actions: ["amplify:ListApps"],
-                })
-              ],
-            }),
-            retrieveApiGatewayUrl: new iam.PolicyDocument({
-              statements: [
-                new iam.PolicyStatement({
-                  effect: iam.Effect.ALLOW,
-                  resources: [`arn:*:cloudformation:${this.region}:${this.account}:stack/${httpGatewayStackName}/*`],
-                  actions: ["cloudformation:DescribeStacks"],
-                })
-              ],
-            }),
-            restApiAdmin: new iam.PolicyDocument({
-              statements: [
-                new iam.PolicyStatement({
-                  effect: iam.Effect.ALLOW,
-                  resources: [
-                    `arn:aws:execute-api:${this.region}:${this.account}:${restApiGateway.restApiId}/*/*/*`
-                  ],
-                  actions: ["execute-api:Invoke"],
-                })
-              ],
-            }),
-            s3Buckets: new iam.PolicyDocument({
-              statements: [
-                new iam.PolicyStatement({
-                  effect: iam.Effect.ALLOW,
-                  resources: ["arn:aws:s3:::*mlflow*"],
-                  actions: ["s3:ListBucket","s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:PutObjectTagging", "s3:CreateBucket"],
-                })
-              ],
-            }),
+            retrieveAmplifyUrl: retrieveAmplifyUrlPolicy,
+            retrieveApiGatewayUrl: retrieveApiGatewayUrlPolicy,
+            restApiAdmin: restApiAdminPolicy,
+            s3Buckets: s3bucketPolicy
           },
         });
-        
+
         const sagemakerReadersExecutionRole = new iam.Role(this, "sagemaker-mlflow-reader-role", {
           assumedBy: new iam.ServicePrincipal("sagemaker.amazonaws.com"),
           managedPolicies: [
             iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonSageMakerFullAccess")
           ],
           inlinePolicies: {
-            retrieveAmplifyUrl: new iam.PolicyDocument({
-              statements: [
-                new iam.PolicyStatement({
-                  effect: iam.Effect.ALLOW,
-                  resources: [`arn:*:amplify:${this.region}:${this.account}:apps/*`],
-                  actions: ["amplify:ListApps"],
-                })
-              ],
-            }),
-            retrieveApiGatewayUrl: new iam.PolicyDocument({
-              statements: [
-                new iam.PolicyStatement({
-                  effect: iam.Effect.ALLOW,
-                  resources: [`arn:*:cloudformation:${this.region}:${this.account}:stack/${httpGatewayStackName}/*`],
-                  actions: ["cloudformation:DescribeStacks"],
-                })
-              ],
-            }),
-            restApiReader: new iam.PolicyDocument({
-              statements: [
-                new iam.PolicyStatement({
-                  effect: iam.Effect.ALLOW,
-                  resources: [
-                    `arn:aws:execute-api:${this.region}:${this.account}:${restApiGateway.restApiId}/*/GET/*`,
-                    `arn:aws:execute-api:${this.region}:${this.account}:${restApiGateway.restApiId}/*/POST/api/2.0/mlflow/runs/search`,
-                    `arn:aws:execute-api:${this.region}:${this.account}:${restApiGateway.restApiId}/*/POST/api/2.0/mlflow/experiments/search`
-                  ],
-                  actions: ["execute-api:Invoke"],
-                })
-              ],
-            }),
-            s3Buckets: new iam.PolicyDocument({
-              statements: [
-                new iam.PolicyStatement({
-                  effect: iam.Effect.ALLOW,
-                  resources: ["arn:aws:s3:::*mlflow*"],
-                  actions: ["s3:ListBucket","s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:PutObjectTagging", "s3:CreateBucket"],
-                })
-              ],
-            }),
+            retrieveAmplifyUrl: retrieveAmplifyUrlPolicy,
+            retrieveApiGatewayUrl: retrieveApiGatewayUrlPolicy,
+            restApiReader: restApiReaderPolicy,
+            s3Buckets: s3bucketPolicy
           },
         });
-        
+
         // SageMaker Execution Role for denying all on MLFlow
         const sagemakerDenyAllExecutionRole = new iam.Role(this, "sagemaker-mlflow-deny-all-role", {
           assumedBy: new iam.ServicePrincipal("sagemaker.amazonaws.com"),
@@ -146,44 +146,10 @@ export class SageMakerStudioUserStack extends cdk.Stack {
             iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonSageMakerFullAccess")
           ],
           inlinePolicies: {
-            retrieveAmplifyUrl: new iam.PolicyDocument({
-              statements: [
-                new iam.PolicyStatement({
-                  effect: iam.Effect.ALLOW,
-                  resources: [`arn:*:amplify:${this.region}:${this.account}:apps/*`],
-                  actions: ["amplify:ListApps"],
-                })
-              ],
-            }),
-            retrieveApiGatewayUrl: new iam.PolicyDocument({
-              statements: [
-                new iam.PolicyStatement({
-                  effect: iam.Effect.ALLOW,
-                  resources: [`arn:*:cloudformation:${this.region}:${this.account}:stack/${httpGatewayStackName}/*`],
-                  actions: ["cloudformation:DescribeStacks"],
-                })
-              ],
-            }),
-            restApiDeny: new iam.PolicyDocument({
-              statements: [
-                new iam.PolicyStatement({
-                  effect: iam.Effect.DENY,
-                  resources: [
-                    `arn:aws:execute-api:${this.region}:${this.account}:${restApiGateway.restApiId}/*/*/*`
-                  ],
-                  actions: ["execute-api:Invoke"],
-                })
-              ],
-            }),
-            s3Buckets: new iam.PolicyDocument({
-              statements: [
-                new iam.PolicyStatement({
-                  effect: iam.Effect.ALLOW,
-                  resources: ["arn:aws:s3:::*mlflow*"],
-                  actions: ["s3:ListBucket","s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:PutObjectTagging", "s3:CreateBucket"],
-                })
-              ],
-            }),
+            retrieveAmplifyUrl: retrieveAmplifyUrlPolicy,
+            retrieveApiGatewayUrl: retrieveApiGatewayUrlPolicy,
+            restApiDeny: restApiDenyPolicy,
+            s3Buckets: s3bucketPolicy
           },
         });
         
