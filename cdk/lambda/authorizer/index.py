@@ -115,7 +115,7 @@ def handler(event, context):
         policy.allowMethod(HttpVerb.GET, f"{AJAX_API_PREFIX}/*")
         policy.allowMethod(HttpVerb.GET, f"/get-artifact")
         policy.allowMethod(HttpVerb.GET, f"/model-versions/*")
-    elif 'model-approver' in groups:
+    elif 'model-approvers' in groups:
         # user cannot do anything
         policy.allowMethod(HttpVerb.POST, f"{AJAX_API_PREFIX}/runs/search")
         policy.allowMethod(HttpVerb.POST, f"{AJAX_API_PREFIX}/experiments/search")

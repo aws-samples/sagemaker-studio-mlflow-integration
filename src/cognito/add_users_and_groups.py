@@ -5,7 +5,7 @@ import getpass
 cognito_client = boto3.client('cognito-idp')
 user_pools = cognito_client.list_user_pools(MaxResults=60)['UserPools']
 user_pool_id = [user_pool['Id'] for user_pool in user_pools if user_pool['Name']=='mlflow-user-pool'][0]
-groups = ['admins', 'readers', 'deny-all']
+groups = ['admins', 'readers', 'model-approvers']
 list_groups = cognito_client.list_groups(UserPoolId=user_pool_id)['Groups']
 existing_group_names = [group['GroupName'] for group in list_groups]
 users_groups = [
@@ -18,8 +18,8 @@ users_groups = [
         'group': 'readers',
     },
     {
-        'username': 'mlflow-deny-all@example.com',
-        'group': 'deny-all'
+        'username': 'mlflow-model-approver@example.com',
+        'group': 'model-approvers'
     }
 ]
 list_users = cognito_client.list_users(UserPoolId=user_pool_id)['Users']
