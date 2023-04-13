@@ -7,6 +7,7 @@ import { PassthroughBehavior } from "aws-cdk-lib/aws-apigateway"
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as lambdapython from '@aws-cdk/aws-lambda-python-alpha';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 import { IdentityPool, UserPoolAuthenticationProvider } from '@aws-cdk/aws-cognito-identitypool-alpha';
 
 export class RestApiGatewayStack extends cdk.Stack {
@@ -161,6 +162,16 @@ export class RestApiGatewayStack extends cdk.Stack {
       },
       // "false" will require explicitly adding methods on the `proxy` resource
       anyMethod: true // "true" is the default
+    });
+
+    const mlflowRestApiId = new ssm.StringParameter(this, 'mlflowRestApiId', {
+      parameterName: 'mlflow-restApiId',
+      stringValue: this.restApi.restApiId,
+    });
+
+    const mlflowRestApiUrl = new ssm.StringParameter(this, 'mlflowRestApiUrl', {
+      parameterName: 'mlflow-restApiUrl',
+      stringValue: this.restApi.url,
     });
 
     new cdk.CfnOutput(this, "Rest API Output : ", {

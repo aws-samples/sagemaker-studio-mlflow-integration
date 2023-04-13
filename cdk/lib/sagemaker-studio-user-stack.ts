@@ -41,25 +41,23 @@ export class SageMakerStudioUserStack extends cdk.Stack {
         props?: cdk.StackProps
     ){
         super(scope, id, props);
-        
-        const retrieveAmplifyUrlPolicy = new iam.PolicyDocument({
-          statements: [
-            new iam.PolicyStatement({
-              effect: iam.Effect.ALLOW,
-              resources: [`arn:*:amplify:${this.region}:${this.account}:apps/*`],
-              actions: ["amplify:ListApps"],
-            })
-          ],
-        })
 
-       const retrieveApiGatewayUrlPolicy = new iam.PolicyDocument({
+        const ssmPolicy = new iam.PolicyDocument({
           statements: [
             new iam.PolicyStatement({
               effect: iam.Effect.ALLOW,
-              resources: [`arn:*:cloudformation:${this.region}:${this.account}:stack/${httpGatewayStackName}/*`],
-              actions: ["cloudformation:DescribeStacks"],
+              resources: ['*'],
+              actions: ["ssm:DescribeParameters"]
+            }),
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              resources: [`arn:aws:ssm:${this.region}:${this.account}:parameter/mlflow-*`],
+              actions: [
+                "ssm:GetParameters",
+                "ssm:GetParameter",
+                ]
             })
-          ],
+          ]
         })
 
         const restApiAdminPolicy = new iam.PolicyDocument({
@@ -112,18 +110,6 @@ export class SageMakerStudioUserStack extends cdk.Stack {
           ],
         })
 
-        const restApiDenyPolicy = new iam.PolicyDocument({
-          statements: [
-            new iam.PolicyStatement({
-              effect: iam.Effect.DENY,
-              resources: [
-                `arn:aws:execute-api:${this.region}:${this.account}:${restApiGateway.restApiId}/*/*/*`
-              ],
-              actions: ["execute-api:Invoke"],
-            })
-          ],
-        })
-
         // SageMaker Execution Role for admins
         const sagemakerAdminExecutionRole = new iam.Role(this, "sagemaker-mlflow-admin-role", {
           assumedBy: new iam.CompositePrincipal(
@@ -133,10 +119,9 @@ export class SageMakerStudioUserStack extends cdk.Stack {
             iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonSageMakerFullAccess")
           ],
           inlinePolicies: {
-            retrieveAmplifyUrl: retrieveAmplifyUrlPolicy,
-            retrieveApiGatewayUrl: retrieveApiGatewayUrlPolicy,
             restApiAdmin: restApiAdminPolicy,
-            s3Buckets: s3bucketPolicy
+            s3Buckets: s3bucketPolicy,
+            ssmPolicy: ssmPolicy
           },
         });
 
@@ -146,10 +131,9 @@ export class SageMakerStudioUserStack extends cdk.Stack {
             iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonSageMakerFullAccess")
           ],
           inlinePolicies: {
-            retrieveAmplifyUrl: retrieveAmplifyUrlPolicy,
-            retrieveApiGatewayUrl: retrieveApiGatewayUrlPolicy,
             restApiReader: restApiReaderPolicy,
-            s3Buckets: s3bucketPolicy
+            s3Buckets: s3bucketPolicy,
+            ssmPolicy: ssmPolicy
           },
         });
 

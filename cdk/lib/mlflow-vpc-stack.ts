@@ -300,7 +300,7 @@ export class MLflowVpcStack extends cdk.Stack {
       scaleInCooldown: cdk.Duration.seconds(60),
       scaleOutCooldown: cdk.Duration.seconds(60),
     });
-   
+
     new cdk.CfnOutput(this, "ALB Dns Name : ", {
       value: this.httpApiInternalNLB.loadBalancerDnsName,
     });
