@@ -22,7 +22,7 @@ REGION = os.environ['REGION']
 APP_CLIENT_ID = os.environ['APP_CLIENT_ID']
 KEYS_URL = os.environ['COGNITO_KEYS_URL']
 BEARER_PREFIX = 'Bearer '
-AJAX_API_PREFIX = '/ajax-api/2.0/preview/mlflow'
+AJAX_API_PREFIX = '/ajax-api/2.0/mlflow'
 # instead of re-downloading the public keys every time
 # we download them only on cold start
 # https://aws.amazon.com/blogs/compute/container-reuse-in-lambda/
@@ -66,8 +66,8 @@ def verify_token(token):
     if claims['aud'] != APP_CLIENT_ID:
         print('Token was not issued for this audience')
         return False
-    # now we can use the claims
-    print(claims)
+    # now we can use the claims: DO NOT PRINT FOR PRODUCTION
+    # print(claims)
     return True
 
 def handler(event, context):
@@ -114,10 +114,19 @@ def handler(event, context):
         policy.allowMethod(HttpVerb.POST, f"{AJAX_API_PREFIX}/experiments/search")
         policy.allowMethod(HttpVerb.GET, f"{AJAX_API_PREFIX}/*")
         policy.allowMethod(HttpVerb.GET, f"/get-artifact")
-        policy.allowMethod(HttpVerb.GET, f"/model-version/get-artifact")
-    else:
+        policy.allowMethod(HttpVerb.GET, f"/model-versions/*")
+    elif 'model-approver' in groups:
         # user cannot do anything
-        policy.denyAllMethods()
+        policy.allowMethod(HttpVerb.POST, f"{AJAX_API_PREFIX}/runs/search")
+        policy.allowMethod(HttpVerb.POST, f"{AJAX_API_PREFIX}/experiments/search")
+        policy.allowMethod(HttpVerb.POST, f"{AJAX_API_PREFIX}/registered-models/*")
+        policy.allowMethod(HttpVerb.ALL, f"{AJAX_API_PREFIX}/model-versions/*")
+        policy.allowMethod(HttpVerb.GET, f"{AJAX_API_PREFIX}/*")
+        policy.allowMethod(HttpVerb.GET, f"/get-artifact")
+        policy.allowMethod(HttpVerb.GET, f"/model-versions/*")
+    else:
+        print('Unknown user group')
+        return False
 
     # Finally, build the policy
     authResponse = policy.build()
