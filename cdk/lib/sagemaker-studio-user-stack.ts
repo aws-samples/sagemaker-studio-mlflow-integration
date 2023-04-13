@@ -136,20 +136,6 @@ export class SageMakerStudioUserStack extends cdk.Stack {
             ssmPolicy: ssmPolicy
           },
         });
-
-        // SageMaker Execution Role for denying all on MLFlow
-        const sagemakerDenyAllExecutionRole = new iam.Role(this, "sagemaker-mlflow-deny-all-role", {
-          assumedBy: new iam.ServicePrincipal("sagemaker.amazonaws.com"),
-          managedPolicies: [
-            iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonSageMakerFullAccess")
-          ],
-          inlinePolicies: {
-            retrieveAmplifyUrl: retrieveAmplifyUrlPolicy,
-            retrieveApiGatewayUrl: retrieveApiGatewayUrlPolicy,
-            restApiDeny: restApiDenyPolicy,
-            s3Buckets: s3bucketPolicy
-          },
-        });
         
         if (domainId == "") {
           const defaultVpc = ec2.Vpc.fromLookup(this, 'DefaultVPC', { isDefault: true });
@@ -195,17 +181,10 @@ export class SageMakerStudioUserStack extends cdk.Stack {
             }
           );
 
-          const cfnDenyAllUserProfile = new sagemaker.CfnUserProfile(this, 'MyCfnDenyAllUserProfile', {
-            domainId: cfnStudioDomain.attrDomainId,
-            userProfileName: 'mlflow-deny-all',
-            userSettings: {
-              executionRole: sagemakerDenyAllExecutionRole.roleArn,
-              }
-            }
-          );
         }
         else {
           this.sagemakerStudioDomainId = domainId
+
           const cfnAdminProfile = new sagemaker.CfnUserProfile(this, 'MyCfnAdminProfile', {
             domainId: domainId,
             userProfileName: 'mlflow-admin',
@@ -225,20 +204,6 @@ export class SageMakerStudioUserStack extends cdk.Stack {
             userProfileName: 'mlflow-reader',
             userSettings: {
               executionRole: sagemakerReadersExecutionRole.roleArn,
-              jupyterServerAppSettings: {
-                defaultResourceSpec: {
-                  instanceType: 'system',
-                  sageMakerImageArn: `arn:aws:sagemaker:${this.region}:${sagemakerArnRegionAccountMapping[this.region]}:image/jupyter-server-3`
-                },
-              },
-            },
-          });
-
-          const cfnDenyAllUserProfile = new sagemaker.CfnUserProfile(this, 'MyCfnDenyAllUserProfile', {
-            domainId: domainId,
-            userProfileName: 'mlflow-deny-all',
-            userSettings: {
-              executionRole: sagemakerDenyAllExecutionRole.roleArn,
               jupyterServerAppSettings: {
                 defaultResourceSpec: {
                   instanceType: 'system',
