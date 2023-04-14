@@ -42,6 +42,7 @@ export class SageMakerStudioUserStack extends cdk.Stack {
     ){
         super(scope, id, props);
 
+        // Policy to access the parameters from the Notebook for lab setup
         const ssmPolicy = new iam.PolicyDocument({
           statements: [
             new iam.PolicyStatement({
@@ -60,6 +61,7 @@ export class SageMakerStudioUserStack extends cdk.Stack {
           ]
         })
 
+        // Policy to have admin access to MLflow
         const restApiAdminPolicy = new iam.PolicyDocument({
           statements: [
             new iam.PolicyStatement({
@@ -82,6 +84,7 @@ export class SageMakerStudioUserStack extends cdk.Stack {
           ],
         })
 
+        // Policy to have read-only access to MLflow
         const restApiReaderPolicy =  new iam.PolicyDocument({
           statements: [
             new iam.PolicyStatement({
@@ -95,7 +98,8 @@ export class SageMakerStudioUserStack extends cdk.Stack {
             })
           ],
         })
-        
+
+        // Model approver
         const restApiModelApprover =  new iam.PolicyDocument({
           statements: [
             new iam.PolicyStatement({
@@ -125,6 +129,7 @@ export class SageMakerStudioUserStack extends cdk.Stack {
           },
         });
 
+        // SageMaker Execution Role for readers
         const sagemakerReadersExecutionRole = new iam.Role(this, "sagemaker-mlflow-reader-role", {
           assumedBy: new iam.ServicePrincipal("sagemaker.amazonaws.com"),
           managedPolicies: [
@@ -136,7 +141,20 @@ export class SageMakerStudioUserStack extends cdk.Stack {
             ssmPolicy: ssmPolicy
           },
         });
-        
+
+        // SageMaker Execution Role for readers
+        const sagemakerModelAproverExecutionRole = new iam.Role(this, "sagemaker-mlflow-model-aprover-role", {
+          assumedBy: new iam.ServicePrincipal("sagemaker.amazonaws.com"),
+          managedPolicies: [
+            iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonSageMakerFullAccess")
+          ],
+          inlinePolicies: {
+            restApiReader: restApiModelApprover,
+            s3Buckets: s3bucketPolicy,
+            ssmPolicy: ssmPolicy
+          },
+        });
+
         if (domainId == "") {
           const defaultVpc = ec2.Vpc.fromLookup(this, 'DefaultVPC', { isDefault: true });
           const subnetIds: string[] = [];
@@ -160,7 +178,7 @@ export class SageMakerStudioUserStack extends cdk.Stack {
             vpcId: defaultVpc.vpcId,
             subnetIds: subnetIds,
           });
-          
+
           this.sagemakerStudioDomainId = cfnStudioDomain.attrDomainId
 
           const cfnAdminProfile = new sagemaker.CfnUserProfile(this, 'MyCfnAdminProfile', {
@@ -171,7 +189,7 @@ export class SageMakerStudioUserStack extends cdk.Stack {
               }
             }
           );
-          
+
           const cfnReaderProfile = new sagemaker.CfnUserProfile(this, 'MyCfnReaderProfile', {
             domainId: cfnStudioDomain.attrDomainId,
             userProfileName: 'mlflow-reader',
@@ -181,6 +199,39 @@ export class SageMakerStudioUserStack extends cdk.Stack {
             }
           );
 
+          const cfnModelApproverProfile = new sagemaker.CfnUserProfile(this, 'MyCfnModelApproverProfile', {
+            domainId: cfnStudioDomain.attrDomainId,
+            userProfileName: 'mlflow-model-approver',
+            userSettings: {
+              executionRole: sagemakerModelAproverExecutionRole.roleArn,
+              }
+            }
+          );
+
+          const cfnAdminJupyterApp = new sagemaker.CfnApp(this, 'MyCfnAdminJupyterApp', {
+            appName: 'default',
+            appType: 'JupyterServer',
+            domainId: this.sagemakerStudioDomainId,
+            userProfileName: cfnAdminProfile.userProfileName
+          })
+          cfnAdminJupyterApp.addDependency(cfnAdminProfile)
+
+          const cfnReaderJupyterApp = new sagemaker.CfnApp(this, 'MyCfnReaderJupyterApp', {
+            appName: 'default',
+            appType: 'JupyterServer',
+            domainId: this.sagemakerStudioDomainId,
+            userProfileName: cfnReaderProfile.userProfileName
+          })
+          cfnReaderJupyterApp.addDependency(cfnReaderProfile)
+
+          const cfnModelApproverJupyterApp = new sagemaker.CfnApp(this, 'MyCfnModelApproverJupyterApp', {
+            appName: 'default',
+            appType: 'JupyterServer',
+            domainId: this.sagemakerStudioDomainId,
+            userProfileName: cfnModelApproverProfile.userProfileName
+          })
+
+          cfnModelApproverJupyterApp.addDependency(cfnModelApproverProfile)
         }
         else {
           this.sagemakerStudioDomainId = domainId
@@ -198,12 +249,26 @@ export class SageMakerStudioUserStack extends cdk.Stack {
               },
             },
           });
-          
+
           const cfnReaderProfile = new sagemaker.CfnUserProfile(this, 'MyCfnReaderProfile', {
             domainId: domainId,
             userProfileName: 'mlflow-reader',
             userSettings: {
               executionRole: sagemakerReadersExecutionRole.roleArn,
+              jupyterServerAppSettings: {
+                defaultResourceSpec: {
+                  instanceType: 'system',
+                  sageMakerImageArn: `arn:aws:sagemaker:${this.region}:${sagemakerArnRegionAccountMapping[this.region]}:image/jupyter-server-3`
+                },
+              },
+            },
+          });
+
+          const cfnModelApproverProfile = new sagemaker.CfnUserProfile(this, 'MyCfnModelApproverProfile', {
+            domainId: domainId,
+            userProfileName: 'mlflow-model-approver',
+            userSettings: {
+              executionRole: sagemakerModelAproverExecutionRole.roleArn,
               jupyterServerAppSettings: {
                 defaultResourceSpec: {
                   instanceType: 'system',
