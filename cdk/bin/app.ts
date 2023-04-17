@@ -47,4 +47,4 @@ new AmplifyMlflowStack(
     { env: env }
 )
 
-//Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }))
+Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }))
