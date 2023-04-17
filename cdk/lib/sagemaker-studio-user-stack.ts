@@ -7,28 +7,6 @@ import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 
 import * as iam from "aws-cdk-lib/aws-iam";
 
-const sagemakerArnRegionAccountMapping = {
-  "eu-west-1": "470317259841",
-	"us-east-1": "081325390199",
-	"us-east-2": "429704687514",
-	"us-west-1": "742091327244",
-	"us-west-2": "236514542706",
-	"af-south-1": "559312083959",
-	"ap-east-1": "493642496378",
-	"ap-south-1": "394103062818",
-	"ap-northeast-2": "806072073708",
-	"ap-southeast-1": "492261229750",
-	"ap-southeast-2": "452832661640",
-	"ap-northeast-1": "102112518831",
-	"ca-central-1": "310906938811",
-	"eu-central-1": "936697816551",
-	"eu-west-2": "712779665605",
-	"eu-west-3": "615547856133",
-	"eu-north-1": "243637512696",
-	"eu-south-1": "592751261982",
-	"sa-east-1": "782484402741",
-}
-
 export class SageMakerStudioUserStack extends cdk.Stack {
   public readonly sagemakerStudioDomainId: string;
   
@@ -168,13 +146,7 @@ export class SageMakerStudioUserStack extends cdk.Stack {
           const cfnStudioDomain = new sagemaker.CfnDomain(this, 'MyStudioDomain', {
             authMode: 'IAM',
             defaultUserSettings: {
-              executionRole: sagemakerAdminExecutionRole.roleArn,
-              jupyterServerAppSettings: {
-                defaultResourceSpec: {
-                  instanceType: 'system',
-                  sageMakerImageArn: `arn:aws:sagemaker:${this.region}:${sagemakerArnRegionAccountMapping[this.region]}:image/jupyter-server-3`
-                },
-              },
+              executionRole: sagemakerAdminExecutionRole.roleArn
             },
             domainName: 'StudioDomainName',
             vpcId: defaultVpc.vpcId,
@@ -242,13 +214,7 @@ export class SageMakerStudioUserStack extends cdk.Stack {
             domainId: domainId,
             userProfileName: 'mlflow-admin',
             userSettings: {
-              executionRole: sagemakerAdminExecutionRole.roleArn,
-              jupyterServerAppSettings: {
-                defaultResourceSpec: {
-                  instanceType: 'system',
-                  sageMakerImageArn: `arn:aws:sagemaker:${this.region}:${sagemakerArnRegionAccountMapping[this.region]}:image/jupyter-server-3`
-                },
-              },
+              executionRole: sagemakerAdminExecutionRole.roleArn
             },
           });
 
@@ -256,13 +222,7 @@ export class SageMakerStudioUserStack extends cdk.Stack {
             domainId: domainId,
             userProfileName: 'mlflow-reader',
             userSettings: {
-              executionRole: sagemakerReadersExecutionRole.roleArn,
-              jupyterServerAppSettings: {
-                defaultResourceSpec: {
-                  instanceType: 'system',
-                  sageMakerImageArn: `arn:aws:sagemaker:${this.region}:${sagemakerArnRegionAccountMapping[this.region]}:image/jupyter-server-3`
-                },
-              },
+              executionRole: sagemakerReadersExecutionRole.roleArn
             },
           });
 
@@ -270,13 +230,7 @@ export class SageMakerStudioUserStack extends cdk.Stack {
             domainId: domainId,
             userProfileName: 'mlflow-model-approver',
             userSettings: {
-              executionRole: sagemakerModelAproverExecutionRole.roleArn,
-              jupyterServerAppSettings: {
-                defaultResourceSpec: {
-                  instanceType: 'system',
-                  sageMakerImageArn: `arn:aws:sagemaker:${this.region}:${sagemakerArnRegionAccountMapping[this.region]}:image/jupyter-server-3`
-                },
-              },
+              executionRole: sagemakerModelAproverExecutionRole.roleArn
             },
           });
         }
