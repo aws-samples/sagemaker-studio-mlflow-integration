@@ -4,8 +4,9 @@ import { Construct } from 'constructs';
 import * as sagemaker from 'aws-cdk-lib/aws-sagemaker';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
-
 import * as iam from "aws-cdk-lib/aws-iam";
+
+import { NagSuppressions } from 'cdk-nag'
 
 export class SageMakerStudioUserStack extends cdk.Stack {
   public readonly sagemakerStudioDomainId: string;
@@ -34,7 +35,7 @@ export class SageMakerStudioUserStack extends cdk.Stack {
               actions: [
                 "ssm:GetParameters",
                 "ssm:GetParameter",
-                ]
+              ]
             })
           ]
         })
@@ -234,5 +235,44 @@ export class SageMakerStudioUserStack extends cdk.Stack {
             },
           });
         }
+
+        const nagIamSuprressionSMExecutionRole = [
+          {
+              id: 'AwsSolutions-IAM4',
+              reason: "Domain users require full access and the managed policy is likely better than '*'"
+            },
+            {
+              id: 'AwsSolutions-IAM5',
+              reason: 'S3 bucket permissions only to MLflow related buckets',
+              appliesTo: [
+                'Resource::arn:aws:s3:::*mlflow*'
+              ],
+            },
+            {
+              id: 'AwsSolutions-IAM5',
+              reason: 'Must grant access to all MLflow related SSM parameters for the labs',
+              appliesTo: [
+                `Resource::arn:aws:ssm:${this.region}:${this.account}:parameter/mlflow-*`,
+                'Resource::*',
+              ],
+            },
+            {
+              id: 'AwsSolutions-IAM5',
+              reason: 'Necessary to grant SSM ListParameters',
+              appliesTo: [
+                'Resource::*',
+              ],
+            },
+            {
+              id: 'AwsSolutions-IAM5',
+              reason: 'Group exceptions for API Gateway invoke permissions necessary to demonstrate model approver permission on MLflow',
+            },
+          ]
+
+        NagSuppressions.addResourceSuppressions(sagemakerAdminExecutionRole, nagIamSuprressionSMExecutionRole, true)
+
+        NagSuppressions.addResourceSuppressions(sagemakerReadersExecutionRole, nagIamSuprressionSMExecutionRole, true)
+
+        NagSuppressions.addResourceSuppressions(sagemakerModelAproverExecutionRole, nagIamSuprressionSMExecutionRole, true)
     }
 }
