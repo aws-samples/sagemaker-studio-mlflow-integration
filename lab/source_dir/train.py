@@ -101,9 +101,19 @@ if __name__ =='__main__':
         # SAVE MODEL
         logging.info('saving model in MLflow')
         mlflow.sklearn.log_model(model, "model")
+
         sm_data = json.loads(os.environ.get('SM_TRAINING_ENV'))
         job_name = sm_data['job_name']
-        
+
+        sm_client = boto3.client('sagemaker')
+        training_job_details = sm_client.describe_training_job(TrainingJobName=job_name)
+        input_data_config = training_job_details['InputDataConfig']
+        # Shovel info about the input data
+        input_data = {}
+        for item in input_data_config:
+            input_data[item['ChannelName']] = item['DataSource']['S3DataSource']['S3Uri']
+        mlflow.set_tags(input_data)
+
         # Overwrite system tags
         mlflow.set_tags(
             {
