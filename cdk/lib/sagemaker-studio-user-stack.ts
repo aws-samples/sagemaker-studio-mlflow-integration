@@ -10,6 +10,28 @@ import * as ssm from 'aws-cdk-lib/aws-ssm';
 
 import { NagSuppressions } from 'cdk-nag'
 
+const sageMakerImageArnMapping = {
+    'us-east-1': "081325390199",
+    'us-east-2': "429704687514",
+    'us-west-1': "742091327244",
+    'us-west-2':"236514542706",
+    'af-south-1':"559312083959",
+    'ap-east-1':"493642496378",
+    'ap-south-1':"394103062818",
+    'ap-northeast-2':"806072073708",
+    'ap-southeast-1':"492261229750",
+    'ap-southeast-2':"452832661640",
+    'ap-northeast-1':"102112518831",
+    'ca-central-1':"310906938811",
+    'eu-central-1':"936697816551",
+    'eu-west-1':"470317259841",
+    'eu-west-2':"712779665605",
+    'eu-west-3':"615547856133",
+    'eu-north-1':"243637512696",
+    'eu-south-1':"592751261982",
+    'sa-east-1': "782484402741",
+}
+
 export class SageMakerStudioUserStack extends cdk.Stack {
   public readonly sagemakerStudioDomainId: string;
   
@@ -223,7 +245,20 @@ export class SageMakerStudioUserStack extends cdk.Stack {
           domainId: this.sagemakerStudioDomainId,
           userProfileName: cfnAdminProfile.userProfileName
         })
+
+        const cfnAdminKernelApp = new sagemaker.CfnApp(this, 'MyCfnAdminKernelApp', {
+          appName: 'instance-mlflow-basepython-2-0-ml-t3-medium',
+          appType: 'KernelGateway',
+          domainId: this.sagemakerStudioDomainId,
+          userProfileName: cfnAdminProfile.userProfileName,
+          resourceSpec: {
+            instanceType: 'ml.t3.medium',
+            sageMakerImageArn: `arn:aws:sagemaker:${this.region}:${sageMakerImageArnMapping[this.region]}:image/sagemaker-base-python-38`,
+          }
+        })
+
         cfnAdminJupyterApp.addDependency(cfnAdminProfile)
+        cfnAdminKernelApp.addDependency(cfnAdminProfile)
 
         const cfnReaderJupyterApp = new sagemaker.CfnApp(this, 'MyCfnReaderJupyterApp', {
           appName: 'default',
@@ -231,7 +266,20 @@ export class SageMakerStudioUserStack extends cdk.Stack {
           domainId: this.sagemakerStudioDomainId,
           userProfileName: cfnReaderProfile.userProfileName
         })
+
+        const cfnReaderKernelApp = new sagemaker.CfnApp(this, 'MyCfnReaderKernelApp', {
+          appName: 'instance-mlflow-basepython-2-0-ml-t3-medium',
+          appType: 'KernelGateway',
+          domainId: this.sagemakerStudioDomainId,
+          userProfileName: cfnReaderProfile.userProfileName,
+          resourceSpec: {
+            instanceType: 'ml.t3.medium',
+            sageMakerImageArn: `arn:aws:sagemaker:${this.region}:${sageMakerImageArnMapping[this.region]}:image/sagemaker-base-python-38`,
+          }
+        })
+
         cfnReaderJupyterApp.addDependency(cfnReaderProfile)
+        cfnReaderKernelApp.addDependency(cfnReaderProfile)
 
         const cfnModelApproverJupyterApp = new sagemaker.CfnApp(this, 'MyCfnModelApproverJupyterApp', {
           appName: 'default',
@@ -240,7 +288,18 @@ export class SageMakerStudioUserStack extends cdk.Stack {
           userProfileName: cfnModelApproverProfile.userProfileName
         })
 
+        const cfnModelApproverKernelApp = new sagemaker.CfnApp(this, 'MyCfnModelApproverKernelApp', {
+          appName: 'instance-mlflow-basepython-2-0-ml-t3-medium',
+          appType: 'KernelGateway',
+          domainId: this.sagemakerStudioDomainId,
+          userProfileName: cfnModelApproverProfile.userProfileName,
+          resourceSpec: {
+            instanceType: 'ml.t3.medium',
+            sageMakerImageArn: `arn:aws:sagemaker:${this.region}:${sageMakerImageArnMapping[this.region]}:image/sagemaker-base-python-38`,
+          }
+        })
         cfnModelApproverJupyterApp.addDependency(cfnModelApproverProfile)
+        cfnModelApproverKernelApp.addDependency(cfnModelApproverProfile)
 
         const nagIamSuprressionSMExecutionRole = [
           {
