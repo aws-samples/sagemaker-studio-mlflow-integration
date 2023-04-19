@@ -33,6 +33,7 @@ const sagemakerStudioUserStack = new SageMakerStudioUserStack(
     RestApiGatewayStack.name,
     restApiGatewayStack.restApi,
     domainId,
+    mlflowVpcStack.accessLogs,
     { env: env }
 )
 
