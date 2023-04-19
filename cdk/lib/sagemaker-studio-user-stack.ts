@@ -171,6 +171,7 @@ export class SageMakerStudioUserStack extends cdk.Stack {
         });
 
         if (domainId == "") {
+          // Create a domain
           const defaultVpc = ec2.Vpc.fromLookup(this, 'DefaultVPC', { isDefault: true });
           const subnetIds: string[] = [];
 
@@ -189,86 +190,62 @@ export class SageMakerStudioUserStack extends cdk.Stack {
           });
 
           this.sagemakerStudioDomainId = cfnStudioDomain.attrDomainId
-
-          const cfnAdminProfile = new sagemaker.CfnUserProfile(this, 'MyCfnAdminProfile', {
-            domainId: cfnStudioDomain.attrDomainId,
-            userProfileName: 'mlflow-admin',
-            userSettings: {
-              executionRole: sagemakerAdminExecutionRole.roleArn,
-              }
-            }
-          );
-
-          const cfnReaderProfile = new sagemaker.CfnUserProfile(this, 'MyCfnReaderProfile', {
-            domainId: cfnStudioDomain.attrDomainId,
-            userProfileName: 'mlflow-reader',
-            userSettings: {
-              executionRole: sagemakerReadersExecutionRole.roleArn,
-              }
-            }
-          );
-
-          const cfnModelApproverProfile = new sagemaker.CfnUserProfile(this, 'MyCfnModelApproverProfile', {
-            domainId: cfnStudioDomain.attrDomainId,
-            userProfileName: 'mlflow-model-approver',
-            userSettings: {
-              executionRole: sagemakerModelAproverExecutionRole.roleArn,
-              }
-            }
-          );
-
-          const cfnAdminJupyterApp = new sagemaker.CfnApp(this, 'MyCfnAdminJupyterApp', {
-            appName: 'default',
-            appType: 'JupyterServer',
-            domainId: this.sagemakerStudioDomainId,
-            userProfileName: cfnAdminProfile.userProfileName
-          })
-          cfnAdminJupyterApp.addDependency(cfnAdminProfile)
-
-          const cfnReaderJupyterApp = new sagemaker.CfnApp(this, 'MyCfnReaderJupyterApp', {
-            appName: 'default',
-            appType: 'JupyterServer',
-            domainId: this.sagemakerStudioDomainId,
-            userProfileName: cfnReaderProfile.userProfileName
-          })
-          cfnReaderJupyterApp.addDependency(cfnReaderProfile)
-
-          const cfnModelApproverJupyterApp = new sagemaker.CfnApp(this, 'MyCfnModelApproverJupyterApp', {
-            appName: 'default',
-            appType: 'JupyterServer',
-            domainId: this.sagemakerStudioDomainId,
-            userProfileName: cfnModelApproverProfile.userProfileName
-          })
-
-          cfnModelApproverJupyterApp.addDependency(cfnModelApproverProfile)
         }
         else {
           this.sagemakerStudioDomainId = domainId
-
-          const cfnAdminProfile = new sagemaker.CfnUserProfile(this, 'MyCfnAdminProfile', {
-            domainId: domainId,
-            userProfileName: 'mlflow-admin',
-            userSettings: {
-              executionRole: sagemakerAdminExecutionRole.roleArn
-            },
-          });
-
-          const cfnReaderProfile = new sagemaker.CfnUserProfile(this, 'MyCfnReaderProfile', {
-            domainId: domainId,
-            userProfileName: 'mlflow-reader',
-            userSettings: {
-              executionRole: sagemakerReadersExecutionRole.roleArn
-            },
-          });
-
-          const cfnModelApproverProfile = new sagemaker.CfnUserProfile(this, 'MyCfnModelApproverProfile', {
-            domainId: domainId,
-            userProfileName: 'mlflow-model-approver',
-            userSettings: {
-              executionRole: sagemakerModelAproverExecutionRole.roleArn
-            },
-          });
         }
+
+        const cfnAdminProfile = new sagemaker.CfnUserProfile(this, 'MyCfnAdminProfile', {
+          domainId: this.sagemakerStudioDomainId,
+          userProfileName: 'mlflow-admin',
+          userSettings: {
+            executionRole: sagemakerAdminExecutionRole.roleArn,
+            }
+          }
+        );
+
+        const cfnReaderProfile = new sagemaker.CfnUserProfile(this, 'MyCfnReaderProfile', {
+          domainId: this.sagemakerStudioDomainId,
+          userProfileName: 'mlflow-reader',
+          userSettings: {
+            executionRole: sagemakerReadersExecutionRole.roleArn,
+            }
+          }
+        );
+
+        const cfnModelApproverProfile = new sagemaker.CfnUserProfile(this, 'MyCfnModelApproverProfile', {
+          domainId: this.sagemakerStudioDomainId,
+          userProfileName: 'mlflow-model-approver',
+          userSettings: {
+            executionRole: sagemakerModelAproverExecutionRole.roleArn,
+            }
+          }
+        );
+
+        const cfnAdminJupyterApp = new sagemaker.CfnApp(this, 'MyCfnAdminJupyterApp', {
+          appName: 'default',
+          appType: 'JupyterServer',
+          domainId: this.sagemakerStudioDomainId,
+          userProfileName: cfnAdminProfile.userProfileName
+        })
+        cfnAdminJupyterApp.addDependency(cfnAdminProfile)
+
+        const cfnReaderJupyterApp = new sagemaker.CfnApp(this, 'MyCfnReaderJupyterApp', {
+          appName: 'default',
+          appType: 'JupyterServer',
+          domainId: this.sagemakerStudioDomainId,
+          userProfileName: cfnReaderProfile.userProfileName
+        })
+        cfnReaderJupyterApp.addDependency(cfnReaderProfile)
+
+        const cfnModelApproverJupyterApp = new sagemaker.CfnApp(this, 'MyCfnModelApproverJupyterApp', {
+          appName: 'default',
+          appType: 'JupyterServer',
+          domainId: this.sagemakerStudioDomainId,
+          userProfileName: cfnModelApproverProfile.userProfileName
+        })
+
+        cfnModelApproverJupyterApp.addDependency(cfnModelApproverProfile)
 
         const nagIamSuprressionSMExecutionRole = [
           {
