@@ -28,6 +28,7 @@ export class MLflowVpcStack extends cdk.Stack {
   public readonly httpApiListener: elbv2.NetworkListener;
   public readonly vpc: ec2.Vpc;
   public readonly httpApiInternalNLB: elbv2.NetworkLoadBalancer;
+  public readonly accessLogs: s3.Bucket;
 
   readonly bucketName = `mlflow-${this.account}-${this.region}`
   readonly accesslogBucketName = `accesslogs-${this.account}-${this.region}`
@@ -74,7 +75,7 @@ export class MLflowVpcStack extends cdk.Stack {
       destination: ec2.FlowLogDestination.toCloudWatchLogs(logGroup, flowLogsRole)
     });
     
-    const accessLogs = new s3.Bucket(this, "accessLogs", {
+    this.accessLogs = new s3.Bucket(this, "accessLogs", {
       versioned: false,
       bucketName: this.accesslogBucketName,
       publicReadAccess: false,
@@ -95,7 +96,7 @@ export class MLflowVpcStack extends cdk.Stack {
       autoDeleteObjects: true,
       encryption: s3.BucketEncryption.KMS_MANAGED,
       enforceSSL: true,
-      serverAccessLogsBucket: accessLogs,
+      serverAccessLogsBucket: this.accessLogs,
       serverAccessLogsPrefix: 'mlflow-server'
     })
 
@@ -385,7 +386,7 @@ export class MLflowVpcStack extends cdk.Stack {
       }
     ])
     
-    NagSuppressions.addResourceSuppressions(accessLogs, [
+    NagSuppressions.addResourceSuppressions(this.accessLogs, [
       {
         id: 'AwsSolutions-S1',
         reason: 'This is an access log bucket'

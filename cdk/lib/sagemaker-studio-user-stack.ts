@@ -5,21 +5,45 @@ import * as sagemaker from 'aws-cdk-lib/aws-sagemaker';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as iam from "aws-cdk-lib/aws-iam";
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 
 import { NagSuppressions } from 'cdk-nag'
 
 export class SageMakerStudioUserStack extends cdk.Stack {
   public readonly sagemakerStudioDomainId: string;
   
+  readonly mlflowDeployBucketName = `mlflow-sagemaker-${this.region}-${this.account}`
+
     constructor(
         scope: Construct,
         id: string,
         httpGatewayStackName: string,
         restApiGateway: apigateway.RestApi,
         domainId: string,
+        accessLogs: s3.Bucket,
         props?: cdk.StackProps
     ){
         super(scope, id, props);
+
+        // mlflow deployment S3 bucket
+        const mlFlowDeployBucket = new s3.Bucket(this, "mlFlowDeployBucket", {
+          versioned: false,
+          bucketName: this.mlflowDeployBucketName,
+          publicReadAccess: false,
+          blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+          removalPolicy: cdk.RemovalPolicy.DESTROY,
+          autoDeleteObjects: true,
+          encryption: s3.BucketEncryption.KMS_MANAGED,
+          enforceSSL: true,
+          serverAccessLogsBucket: accessLogs,
+          serverAccessLogsPrefix: 'mlflow-deploy'
+        })
+        
+        const mlflowDeployBucketParam = new ssm.StringParameter(this, 'mlflowRestApiId', {
+          parameterName: 'mlflow-deploy-bucket',
+          stringValue: this.mlflowDeployBucketName,
+        });
 
         // Policy to access the parameters from the Notebook for lab setup
         const ssmPolicy = new iam.PolicyDocument({
@@ -31,7 +55,12 @@ export class SageMakerStudioUserStack extends cdk.Stack {
             }),
             new iam.PolicyStatement({
               effect: iam.Effect.ALLOW,
-              resources: [`arn:aws:ssm:${this.region}:${this.account}:parameter/mlflow-*`],
+              resources: [
+                `arn:aws:ssm:${this.region}:${this.account}:parameter/mlflow-restApiId`,
+                `arn:aws:ssm:${this.region}:${this.account}:parameter/mlflow-restApiUrl`,
+                `arn:aws:ssm:${this.region}:${this.account}:parameter/mlflow-deploy-bucket`,
+                `arn:aws:ssm:${this.region}:${this.account}:parameter/mlflow-uiUrl`
+              ],
               actions: [
                 "ssm:GetParameters",
                 "ssm:GetParameter",
@@ -57,8 +86,13 @@ export class SageMakerStudioUserStack extends cdk.Stack {
           statements: [
             new iam.PolicyStatement({
               effect: iam.Effect.ALLOW,
-              resources: ["arn:aws:s3:::*mlflow*"],
-              actions: ["s3:ListBucket","s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:PutObjectTagging", "s3:CreateBucket"],
+              resources: [
+                `arn:aws:s3:::${this.mlflowDeployBucketName}`,
+                `arn:aws:s3:::mlflow-${this.account}-${this.region}`,
+                `arn:aws:s3:::${this.mlflowDeployBucketName}/*`,
+                `arn:aws:s3:::mlflow-${this.account}-${this.region}/*`
+              ],
+              actions: ["s3:ListBucket","s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:PutObjectTagging"],
             })
           ],
         })
@@ -240,21 +274,6 @@ export class SageMakerStudioUserStack extends cdk.Stack {
           {
               id: 'AwsSolutions-IAM4',
               reason: "Domain users require full access and the managed policy is likely better than '*'"
-            },
-            {
-              id: 'AwsSolutions-IAM5',
-              reason: 'S3 bucket permissions only to MLflow related buckets',
-              appliesTo: [
-                'Resource::arn:aws:s3:::*mlflow*'
-              ],
-            },
-            {
-              id: 'AwsSolutions-IAM5',
-              reason: 'Must grant access to all MLflow related SSM parameters for the labs',
-              appliesTo: [
-                `Resource::arn:aws:ssm:${this.region}:${this.account}:parameter/mlflow-*`,
-                'Resource::*',
-              ],
             },
             {
               id: 'AwsSolutions-IAM5',
