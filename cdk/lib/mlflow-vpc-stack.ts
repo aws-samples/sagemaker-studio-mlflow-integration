@@ -193,7 +193,16 @@ export class MLflowVpcStack extends cdk.Stack {
                 `arn:aws:s3:::${this.bucketName}`,
                 `arn:aws:s3:::${this.bucketName}/*`
               ],
-              actions: ["s3:*"]
+              actions: [
+                "s3:ListBucket",
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:DeleteObject",
+                "s3:PutObjectTagging",
+                "s3:DeleteObjectTagging",
+                "s3:GetBucketTagging",
+                "s3:GetObjectTagging"
+              ]
             })
           ]
         }),
@@ -360,11 +369,6 @@ export class MLflowVpcStack extends cdk.Stack {
         id: 'AwsSolutions-IAM5',
         reason: 'The task owns this bucket and it should have full permissions on the objects',
         appliesTo: [`Resource::arn:aws:s3:::${this.bucketName}/*`]
-      },
-      {
-        id: 'AwsSolutions-IAM5',
-        reason: 'The task owns this bucket and it should have admin permissions on the objects',
-        appliesTo: ["Action::s3:*"]
       },
       {
         id: 'AwsSolutions-IAM5',
