@@ -265,7 +265,7 @@ Clone this repository either from the terminal or from the SageMaker Studio UI.
 git clone https://github.com/aws-samples/sagemaker-studio-mlflow-integration.git
 ```
 
-Navigate to the `./sagemaker-studio-mlflow-integration/lab/` folder and open the open the `sagemaker_studio_and_mlflow.ipynb` notebook.
+Navigate to the `./sagemaker-studio-mlflow-integration/lab/` folder and open the open the [`1_mlflow-admin-lab.ipynb`](./lab/1_mlflow-admin-lab.ipybn) notebook.
 You can see how to train in Amazon SageMaker and store the resulting models in MLflow after retrieving the credentials at runtime and how to deploy models stored in Amazon SageMaker endpoints using the MLflow SDK.
 Furthermore, the lab shows how you can enrich MLflow metadata with SageMaker metadata, and vice versa, by storing MFlow specifics in SageMaker via SageMaker Experiments SDK and visualize them in the SageMaker Studio UI.
 
