@@ -1,5 +1,8 @@
 # Secure MLflow in AWS with native AWS services
 
+We aim to demostrate how it is possible to achieve a hybrid architecture using different tools to enable end-to-end Machine Learning workflows.
+Specifically, we look at Amazon SageMaker and MLflow, and how they can be integrated securely without worrying about managing credentials by using IAM Roles and temporary credentials.
+
 ## Custom authentication and authorization on MLflow
 
 This sample shows how to do the following:
@@ -30,7 +33,7 @@ This sample is made of 4 different stacks:
     * adds three users, each one with a different SageMaker execution role implementing different access level:
         * `mlflow-admin` -> admin like permission to the MLFlow resources
         * `mlflow-reader` -> read-only admin to the MLFlow resources
-        * `mlflow-deny-all` -> cannot access any MLFlow resource
+        * `mlflow-model-approver` -> same permissions as `mlflow-reader` plus can register new models from existing runs, and promote existing registered models to new stages in MLflow
 
 Our proposed architecture is shown Fig. 1
 
@@ -105,9 +108,6 @@ cd mlflow
 git am ../cognito-mlflow_v2-2-1.patch
 ```
 
-![MLflowCognito](./images/mlflow-cognito.png)
-*Fig. 2 - MLflow login flow using AWS Amplify, Amazon Cognito and Lambda Authorizer on the API Gateway*
-
 #### Resizing the Cloud9
 Before deploying, since we use CDK construct to build the container images locally, we need a larger disk size than the one provided by Cloud9 in its default environment configuration (i.e. 20GB, whivh is not enough).
 To resize it on the fly without rebooting the instance, you can run the following script specifying a new desired size.
@@ -171,18 +171,21 @@ To check the script code [here](https://github.com/aws-samples/sagemaker-studio-
 After running the script, if you check the Cognito User Pool in the console you should see the three users created
 
 ![CognitoUsers](./images/cognito-user-pool.png)
-*Fig. 3 - Cognito users in the Cognito User Pool.*
+*Fig. 2 - Cognito users in the Cognito User Pool.*
 
 On the REST API Gateway side, the Lambda Authorizer will first verify the signature of the token using the Cognito User Pool Key, verify the claims, and only after that, it will extract the cognito group the user belongs to from the claim in JWT token (i.e., `cognito:groups`), and apply different permissions based on the group itself that we have programmed.
 For our specific case, we have three groups:
 * `admins` - can see and can edit everything
-* `readers` - can only see everything
-* `deny-all` - cannot see / edit anything
+* `readers` - can only read everything
+* `model-approvers` - same as `readers` plus permissions to register models, create model versions, and update models to different stages.
 
 Depending on the group, the Lambda Authorizer will generate different IAM Policies.
 This is just an example on how authorization can be achieved, in fact, with a Lambda Authorizer, you can implement any logic you want.
 If you want to restrict only a subset of actions, you need to be aware of the MLFlow REST API definition, which can be found [here](https://www.mlflow.org/docs/latest/rest-api.html)
 The code for the Lambda Authorizer can be explored [here](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cdk/lambda/authorizer/index.py)
+
+![MLflowCognito](./images/mlflow-cognito.png)
+*Fig. 3 - MLflow login flow using AWS Amplify, Amazon Cognito and Lambda Authorizer on the API Gateway*
 
 ## *Integration with SageMaker*
 
@@ -198,7 +201,7 @@ Provisioning a new SageMaker Studio domain will do the following operations:
 * Create three new SageMaker Studio users attached to the domain and three different execution role created attached to them. These execution role the same permissions that the Lambda Authorizer applies to the different groups.
   * `mlflow-admin` - has associated an execution role with the similar permissions as the user in the cognito group `admins` 
   * `mlflow-reader` - has associated an execution role with the similar permissions as the user in the cognito group `readers`
-  * `mlflow-deny-all` - has associated an execution role with the similar permissions as the user in the cognito group `deny-all`
+  * `mlflow-model-arrpover` - has associated an execution role with the similar permissions as the user in the cognito group `deny-all`
 
 ![MLflowSageMaker](./images/mlflow-sagemaker.png)
 *Fig. 3 - Accessing MLflow from SageMeker Studio and SageMaker Training Jobs using IAM Roles*
@@ -248,6 +251,7 @@ Once the build completes (might take some time) you can access the MLFlow UI fro
 
 ![AmplifyMLflowUI](./images/amplify-mlflow-ui-link.png)
 *Fig. 5 - Retrieve the URL of the MLflow UI*
+
 
 ### MLflow / Amazon SageMaker Studio integration lab
 
