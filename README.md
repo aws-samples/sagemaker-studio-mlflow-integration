@@ -126,15 +126,18 @@ If you would like to familiarize yourself the [CDKWorkshop](https://cdkworkshop.
 Using Cloud9 environment, open a new Terminal and use the following commands:
 ```bash
 cd ~/environment/sagemaker-studio-mlflow-integration/cdk
-npm install -g aws-cdk@2.63.2 --force
+npm install -g aws-cdk@2.75.1 --force
 cdk --version
 ```
 
-Take a note of the latest version that you install, at the time of writing this post it is `2.63.2`.
-Open the package.json file and replace the version “2.63.2” of the following modules with the latest version that you have installed above.
+Take a note of the latest version that you install, at the time of writing this post it is `2.75.1`.
+Open the package.json file and replace the version “2.75.1” of the following modules with the latest version that you have installed above.
 
 ```typescript
-"aws-cdk-lib": "2.63.2",
+"aws-cdk-lib": "2.75.1",
+"@aws-cdk/aws-amplify-alpha": "2.75.1-alpha.0",
+"@aws-cdk/aws-cognito-identitypool-alpha": "2.75.1-alpha.0",
+"@aws-cdk/aws-lambda-python-alpha": "2.75.1-alpha.0",
 ```
 
 This will install all the latest CDK modules under the `node_modules` directory (`npm install`) and prepare your AWS account to deploy resources with CDK (`cdk bootstrap`).

@@ -11,10 +11,10 @@
     "cdk": "cdk"
   },
   "devDependencies": {
-    "aws-cdk-lib": "2.63.2",
-    "@aws-cdk/aws-amplify-alpha": "2.63.2-alpha.0",
-    "@aws-cdk/aws-cognito-identitypool-alpha": "2.63.2-alpha.0",
-    "@aws-cdk/aws-lambda-python-alpha": "2.63.2-alpha.0",
+    "aws-cdk-lib": "2.75.1",
+    "@aws-cdk/aws-amplify-alpha": "2.75.1-alpha.0",
+    "@aws-cdk/aws-cognito-identitypool-alpha": "2.75.1-alpha.0",
+    "@aws-cdk/aws-lambda-python-alpha": "2.75.1-alpha.0",
     "@types/jest": "^26.0.10",
     "@types/node": "10.17.27",
     "cdk-nag": "2.25.5",
