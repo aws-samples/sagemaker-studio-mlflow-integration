@@ -7,7 +7,10 @@ import * as codebuild from "aws-cdk-lib/aws-codebuild";
 import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as codecommit from "aws-cdk-lib/aws-codecommit";
 import * as ssm from 'aws-cdk-lib/aws-ssm';
+import * as cr from 'aws-cdk-lib/custom-resources';
+
 import { IdentityPool } from '@aws-cdk/aws-cognito-identitypool-alpha';
+import { NagSuppressions } from 'cdk-nag'
 
 export class AmplifyMlflowStack extends cdk.Stack {
   constructor(
@@ -108,10 +111,36 @@ export class AmplifyMlflowStack extends cdk.Stack {
         target: `${restApiGateway.url}model-versions/get-artifact`,
         status: amplify.RedirectStatus.REWRITE
     })
+    
+    const buildTrigger = new cr.AwsCustomResource(this, 'triggerAppBuild', {
+        policy: cr.AwsCustomResourcePolicy.fromSdkCalls({
+            resources: [`arn:aws:amplify:${this.region}:${this.account}:apps/${amplifyApp.appId}/branches/main/jobs/*`]
+        }),
+        onCreate: {
+            service: 'Amplify',
+            action: 'startJob',
+            physicalResourceId: cr.PhysicalResourceId.of('app-build-trigger'),
+            apiVersion: '9.2.1',
+            parameters: {
+                appId: amplifyApp.appId,
+                branchName: 'main',
+                jobType: 'RELEASE',
+                jobReason: 'Auto Start build',
+            }
+        },
+    });
 
     const mlflowUiUrl = new ssm.StringParameter(this, 'mlflowUiUrl', {
       parameterName: 'mlflow-uiUrl',
       stringValue: `https://main.${amplifyApp.defaultDomain}`
     });
+
+    NagSuppressions.addResourceSuppressions(buildTrigger, [
+        {
+            id: 'AwsSolutions-IAM5',
+            reason: 'Permissions needed by the lambda function to trigger the first build job',
+            appliesTo: [`Resource::arn:aws:amplify:${this.region}:${this.account}:apps/${amplifyApp.appId}/branches/main/jobs/*`]
+        }
+    ], true)
 }
 }
