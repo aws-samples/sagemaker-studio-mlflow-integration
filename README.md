@@ -237,7 +237,7 @@ mlflow sagemaker build-and-push-container
 ```
 
 ### Accessing the MLflow UI
-Before accessing the MLflow UI, we need to ensure the the first build got executed.
+Before accessing the MLflow UI, we need to ensure the the first build got successfully executed.
 Navigate to the Amplify console, and select the `MLflow-UI` app that we have created.
 Then execute the first build as shown in Fig. 4.
 
@@ -266,7 +266,7 @@ git clone https://github.com/aws-samples/sagemaker-studio-mlflow-integration.git
 ```
 
 Navigate to the `./sagemaker-studio-mlflow-integration/lab/` folder and open the open the [`1_mlflow-admin-lab.ipynb`](./lab/1_mlflow-admin-lab.ipybn) notebook.
-You can see how to train in Amazon SageMaker and store the resulting models in MLflow after retrieving the credentials at runtime and how to deploy models stored in Amazon SageMaker endpoints using the MLflow SDK.
+You can see how to train in Amazon SageMaker and store the resulting models in MLflow without managing any credentials, and how to deploy models stored in Amazon SageMaker endpoints using the MLflow SDK.
 Furthermore, the lab shows how you can enrich MLflow metadata with SageMaker metadata, and vice versa, by storing MFlow specifics in SageMaker via SageMaker Experiments SDK and visualize them in the SageMaker Studio UI.
 
 ## Render MLflow within SageMaker Studio
