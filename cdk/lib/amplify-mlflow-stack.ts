@@ -139,7 +139,6 @@ export class AmplifyMlflowStack extends cdk.Stack {
         {
             id: 'AwsSolutions-IAM5',
             reason: 'Permissions needed by the lambda function to trigger the first build job',
-            appliesTo: [`Resource::arn:aws:amplify:${this.region}:${this.account}:apps/${amplifyApp.appId}/branches/main/jobs/*`]
         }
     ], true)
 }
