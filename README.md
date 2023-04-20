@@ -18,17 +18,17 @@ Due to its modularity, this sample can be extended in a number of ways, and we w
 ## Architecture
 
 This sample is made of 4 different stacks:
-* [`MLflowVPCStack`](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cdk/lib/mlflow-vpc-stack.ts)
+* [`MLflowVPCStack`](./cdk/lib/mlflow-vpc-stack.ts)
     * deploys a MLfLow tracking server on a serverless infrastructure running on ECS and Fargate on a private subnet
     * deploys an Aurora Serverless database for the data store and S3 for the artifact store.
-* [`RestApiGatewayStack`](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cdk/lib/rest-api-gateway-stack.ts)
+* [`RestApiGatewayStack`](./cdk/lib/rest-api-gateway-stack.ts)
     * exposes the MLFlow server via a PrivateLink to an REST API Gateway.
     * deploys a Cognito User Pool to manage the users accessing the UI.
     * deploy a Lambda Authorizer to verify the JWT token with the Cognito User Pool ID keys and returns IAM policies to allow or deny a request.
     * adds IAM Authorizer. This will be applied to the 
-* [`AmplifyMLflowStack`](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cdk/lib/amplify-mlflow-stack.ts)
+* [`AmplifyMLflowStack`](./cdk/lib/amplify-mlflow-stack.ts)
     * creates an app with CI/CD capability to deploy the MLFLow UI
-* [`SageMakerStudioUserStack`](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cdk/lib/sagemaker-studio-user-stack.ts)
+* [`SageMakerStudioUserStack`](./cdk/lib/sagemaker-studio-user-stack.ts)
     * deploys a SageMaker Studio domain (if not existing).
     * adds three users, each one with a different SageMaker execution role implementing different access level:
         * `mlflow-admin` -> admin like permission to the MLFlow resources
@@ -98,8 +98,8 @@ echo "export DOMAIN_ID=${DOMAIN_ID}" | tee -a ~/.bash_profile
 MLflow UI does not support any login workflow, nonetheless mechanisms to set the proper headers to authenticated API calls against a backend service.
 Amplify provides libraries that can be used to quickly add a login workflow, and to easily manage the lifecycle of the authentication tokens.
 We provide you a patch to be applied on top of MLflow `2.2.1` that adds Amplify React Components for authentication and how to add `Authorization` header with a `Bearer` token for every backend API call.
-The patch we provided can be checked [here](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cognito-mlflow_v2-2-1.patch) and it will enable a login flow backed by Amazon Cognito as shown in Fig. 2.
-**Note: we also provide a patch for MLflow `1.30.0`. If you want to install that version, you need to ensure mlflow `1.30.0` [here](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cognito-mlflow_v1-30-0.patch) in stalled throughout this sample, and you adapt the lab sample to work with that same version as the SDK for deploying a model to SageMaker has changed**
+The patch we provided can be checked [here](./cognito-mlflow_v2-2-1.patch) and it will enable a login flow backed by Amazon Cognito as shown in Fig. 2.
+**Note: we also provide a patch for MLflow `1.30.0`. If you want to install that version, you need to ensure mlflow `1.30.0` [here](./cognito-mlflow_v1-30-0.patch) in stalled throughout this sample, and you adapt the lab sample to work with that same version as the SDK for deploying a model to SageMaker has changed**
 
 ```bash
 cd ~/environment/sagemaker-studio-mlflow-integration/
@@ -166,7 +166,7 @@ Please ensure that the password you pick respects the password policy defined fo
 cd ~/environment/sagemaker-studio-mlflow-integration/src/cognito/
 python add_users_and_groups.py
 ```
-To check the script code [here](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/src/cognito/add_users_and_groups.py).
+To check the script code [here](./src/cognito/add_users_and_groups.py).
 
 After running the script, if you check the Cognito User Pool in the console you should see the three users created
 
@@ -182,7 +182,7 @@ For our specific case, we have three groups:
 Depending on the group, the Lambda Authorizer will generate different IAM Policies.
 This is just an example on how authorization can be achieved, in fact, with a Lambda Authorizer, you can implement any logic you want.
 If you want to restrict only a subset of actions, you need to be aware of the MLFlow REST API definition, which can be found [here](https://www.mlflow.org/docs/latest/rest-api.html)
-The code for the Lambda Authorizer can be explored [here](https://github.com/aws-samples/sagemaker-studio-mlflow-integration/blob/main/cdk/lambda/authorizer/index.py)
+The code for the Lambda Authorizer can be explored [here](./cdk/lambda/authorizer/index.py)
 
 ![MLflowCognito](./images/mlflow-cognito.png)
 *Fig. 3 - MLflow login flow using AWS Amplify, Amazon Cognito and Lambda Authorizer on the API Gateway*
@@ -269,9 +269,11 @@ Clone this repository either from the terminal or from the SageMaker Studio UI.
 git clone https://github.com/aws-samples/sagemaker-studio-mlflow-integration.git
 ```
 
-Navigate to the `./sagemaker-studio-mlflow-integration/lab/` folder and open the open the [`1_mlflow-admin-lab.ipynb`](./lab/1_mlflow-admin-lab.ipybn) notebook.
-You can see how to train in Amazon SageMaker and store the resulting models in MLflow without managing any credentials, and how to deploy models stored in Amazon SageMaker endpoints using the MLflow SDK.
-Furthermore, the lab shows how you can enrich MLflow metadata with SageMaker metadata, and vice versa, by storing MFlow specifics in SageMaker via SageMaker Experiments SDK and visualize them in the SageMaker Studio UI.
+## Labs
+We provide three labs located in the `./sagemaker-studio-mlflow-integration/lab/` folder.
+1. [`1_mlflow-admin-lab.ipynb`](./lab/1_mlflow-admin-lab.ipybn) In this lab you will test an admin permission. In here we access MLflow from both SageMaker Studio, and from a SageMaker Training Job using the execution role assigned to the user profile `mlflow-admin`. Once the training is completed, we further show how to register models, create model versions from the artifact, and download locally the artifacts for testing purposes. Finally, we show how to deploy the model on the SageMaker Managed infrastructure. Furthermore, the lab shows how you can enrich MLflow metadata with SageMaker metadata, and vice versa, by storing MFlow specifics in SageMaker via SageMaker Experiments SDK and visualize them in the SageMaker Studio UI.
+2. [`2_mlflow-reader-lab.ipynb`](./lab/2_mlflow-reader-lab.ipybn)
+3. [`3_mlflow-model-approver-lab.ipynb`](./lab/3_mlflow-model-approver-lab.ipybn)
 
 ## Render MLflow within SageMaker Studio
 
