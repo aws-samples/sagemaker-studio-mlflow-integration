@@ -50,11 +50,6 @@ export class SageMakerStudioUserStack extends cdk.Stack {
           statements: [
             new iam.PolicyStatement({
               effect: iam.Effect.ALLOW,
-              resources: ['*'],
-              actions: ["ssm:DescribeParameters"]
-            }),
-            new iam.PolicyStatement({
-              effect: iam.Effect.ALLOW,
               resources: [
                 `arn:aws:ssm:${this.region}:${this.account}:parameter/mlflow-restApiId`,
                 `arn:aws:ssm:${this.region}:${this.account}:parameter/mlflow-restApiUrl`,
@@ -251,13 +246,6 @@ export class SageMakerStudioUserStack extends cdk.Stack {
           {
               id: 'AwsSolutions-IAM4',
               reason: "Domain users require full access and the managed policy is likely better than '*'"
-            },
-            {
-              id: 'AwsSolutions-IAM5',
-              reason: 'Necessary to grant SSM ListParameters',
-              appliesTo: [
-                'Resource::*',
-              ],
             },
             {
               id: 'AwsSolutions-IAM5',
