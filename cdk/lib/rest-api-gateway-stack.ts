@@ -92,6 +92,7 @@ export class RestApiGatewayStack extends cdk.Stack {
           methodResponses: [{
             statusCode: "200"
           }],
+          authorizationType: apigateway.AuthorizationType.IAM
         },
         deployOptions: {
           accessLogDestination: new apigateway.LogGroupLogDestination(logGroup),
