@@ -220,11 +220,6 @@ export class MLflowVpcStack extends cdk.Stack {
                 "secretsmanager:ListSecretVersionIds"
               ]
             }),
-            new iam.PolicyStatement({
-              effect: iam.Effect.ALLOW,
-              resources: ["*"],
-              actions: ["secretsmanager:ListSecrets"]
-            })
           ]
         })
       }
@@ -369,11 +364,6 @@ export class MLflowVpcStack extends cdk.Stack {
         id: 'AwsSolutions-IAM5',
         reason: 'The task owns this bucket and it should have full permissions on the objects',
         appliesTo: [`Resource::arn:aws:s3:::${this.bucketName}/*`]
-      },
-      {
-        id: 'AwsSolutions-IAM5',
-        reason: 'Action secretmanager::ListSecrets must be applied on a "*"',
-        appliesTo: ["Resource::*"]
       },
       {
         id: 'AwsSolutions-IAM4',
