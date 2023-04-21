@@ -56,6 +56,7 @@ export class MLflowVpcStack extends cdk.Stack {
           name: 'public',
           subnetType: ec2.SubnetType.PUBLIC,
           cidrMask: 24,
+          mapPublicIpOnLaunch: false
         },
         {
           name: 'private',
