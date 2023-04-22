@@ -14,7 +14,6 @@ This sample shows how to do the following:
 
 Due to its modularity, this sample can be extended in a number of ways, and we will provide guidance on how to do so.
 
-
 ## Architecture
 
 This sample is made of 4 different stacks:
@@ -41,7 +40,9 @@ Our proposed architecture is shown Fig. 1
 *Fig. 1 - MLflow on AWS architecture diagram*
 
 ## Prerequisites
-* access to an AWS account with Admin permissions.
+* Access to an AWS account with Admin permissions and credentials correctly set
+* Docker
+* Python 3.8
 
 ## Deployment
 
@@ -155,6 +156,9 @@ Now we are ready to deploy our full solution.
 cdk deploy --all --require-approval never
 ```
 
+To run this sample, we reccommend to deploy all 4 Stacks to test out the SageMaker integration.
+However, if you are only interested in the MLflow deployment (MLflow server, MLflow UI, and REST API Gateway), you can deploy only the first three stacks, i.e. [`MLflowVPCStack`](./cdk/lib/mlflow-vpc-stack.ts), [`RestApiGatewayStack`](./cdk/lib/rest-api-gateway-stack.ts) and [`AmplifyMLflowStack`](./cdk/lib/amplify-mlflow-stack.ts).
+
 ## Cognito User Pool and Lambda Authorizer
 
 We have provided a script that will populate the Cognito User Pool with 3 users, each belonging to a different group.
@@ -242,15 +246,25 @@ mlflow sagemaker build-and-push-container
 ### Accessing the MLflow UI
 Before accessing the MLflow UI, we need to ensure the first build got successfully executed.
 Navigate to the Amplify console, and select the `MLflow-UI` app that we have created.
-Then execute the first build as shown in Fig. 4.
-
-![AmplifyFirstBuild](./images/amplify-run-first-build.png)
-*Fig. 4 - Execute the first build for the MLflow UI*
 
 Once the build completes (might take some time) you can access the MLFlow UI from the link provided by Amplify as shown in Fig. 5.
 
 ![AmplifyMLflowUI](./images/amplify-mlflow-ui-link.png)
-*Fig. 5 - Retrieve the URL of the MLflow UI*
+*Fig. 4 - Retrieve the URL of the MLflow UI*
+
+There might be cases when the first Amplify build fails.
+If this is not the case, you should re-deploy manually the Amplify build by navigating to the failed build.
+You first select the `main` branch
+
+![AmplifyMainBranch](./images/amplify-main-branch.png)
+*Fig. 5 - Navigate to the Amplify `main` branch*
+
+and then click on the "Redeploy this version".
+
+![AmplifyRedeployThisVersion](./images/amplify-redeploy-this-version.png)
+*Fig. 6 - Redeploy the same failed build*
+
+After a few minutes, you should see the successful build.
 
 ### MLflow / Amazon SageMaker Studio integration lab
 
