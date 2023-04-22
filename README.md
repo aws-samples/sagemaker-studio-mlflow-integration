@@ -204,7 +204,7 @@ Provisioning a new SageMaker Studio domain will do the following operations:
   * `mlflow-model-arrpover` - has associated an execution role with the similar permissions as the user in the cognito group `deny-all`
 
 ![MLflowSageMaker](./images/mlflow-sagemaker.png)
-*Fig. 3 - Accessing MLflow from SageMeker Studio and SageMaker Training Jobs using IAM Roles*
+*Fig. 3 - Accessing MLflow from SageMaker Studio and SageMaker Training Jobs using IAM Roles*
 
 ### Push the `mlflow-pyfunc` container to ECR
 
@@ -240,7 +240,7 @@ mlflow sagemaker build-and-push-container
 ```
 
 ### Accessing the MLflow UI
-Before accessing the MLflow UI, we need to ensure the the first build got successfully executed.
+Before accessing the MLflow UI, we need to ensure the first build got successfully executed.
 Navigate to the Amplify console, and select the `MLflow-UI` app that we have created.
 Then execute the first build as shown in Fig. 4.
 
@@ -251,7 +251,6 @@ Once the build completes (might take some time) you can access the MLFlow UI fro
 
 ![AmplifyMLflowUI](./images/amplify-mlflow-ui-link.png)
 *Fig. 5 - Retrieve the URL of the MLflow UI*
-
 
 ### MLflow / Amazon SageMaker Studio integration lab
 
@@ -271,9 +270,10 @@ git clone https://github.com/aws-samples/sagemaker-studio-mlflow-integration.git
 
 ## Labs
 We provide three labs located in the `./sagemaker-studio-mlflow-integration/lab/` folder.
-1. [`1_mlflow-admin-lab.ipynb`](./lab/1_mlflow-admin-lab.ipybn) In this lab you will test an admin permission. In here we access MLflow from both SageMaker Studio, and from a SageMaker Training Job using the execution role assigned to the user profile `mlflow-admin`. Once the training is completed, we further show how to register models, create model versions from the artifact, and download locally the artifacts for testing purposes. Finally, we show how to deploy the model on the SageMaker Managed infrastructure. Furthermore, the lab shows how you can enrich MLflow metadata with SageMaker metadata, and vice versa, by storing MFlow specifics in SageMaker via SageMaker Experiments SDK and visualize them in the SageMaker Studio UI.
-2. [`2_mlflow-reader-lab.ipynb`](./lab/2_mlflow-reader-lab.ipybn)
-3. [`3_mlflow-model-approver-lab.ipynb`](./lab/3_mlflow-model-approver-lab.ipybn)
+When running the labs, please make sure the kernel selected is `Base Python 2.0` (it should be selected by default).
+1. [`1_mlflow-admin-lab.ipynb`](./lab/1_mlflow-admin-lab.ipybn) For this lab, please use the `mlflow-admin` user profile created for you in SageMaker Studio. In this lab you will test an admin permission. In here we access MLflow from both SageMaker Studio, and from a SageMaker Training Job using the execution role assigned to the user profile `mlflow-admin`. Once the training is completed, we further show how to register models, create model versions from the artifact, and download locally the artifacts for testing purposes. Finally, we show how to deploy the model on the SageMaker Managed infrastructure. Furthermore, the lab shows how you can enrich MLflow metadata with SageMaker metadata, and vice versa, by storing MFlow specifics in SageMaker via SageMaker Experiments SDK and visualize them in the SageMaker Studio UI.
+2. [`2_mlflow-reader-lab.ipynb`](./lab/2_mlflow-reader-lab.ipybn) For this lab, please use the `mlflow-reader` user profile created for you in SageMaker Studio. In this lab you will test read like permissions. You can see details about every experiment, every run, as well as registered models and model versions, however you cannot modify / create new entities.
+3. [`3_mlflow-model-approver-lab.ipynb`](./lab/3_mlflow-model-approver-lab.ipybn) For this lab, please use the `mlflow-model-approver` user profile created for you in SageMaker Studio. In this lab you will test the permissions to register new models and new model versions.
 
 ## Render MLflow within SageMaker Studio
 
@@ -302,9 +302,7 @@ You can now access MLflow UI without leaving the SageMaker Studio UI using the s
 
 ## Cleanup
 
-Before removing all resources created, you need to make sure that all Apps are deleted from the `mlflow-*` user, i.e. all `KernelGateway` apps, as well as the default `JupyterServer`.
-
-Once done, you can destroy the CDK stack by running
+You can destroy the CDK stack by running the following command:
 
 ```bash
 cd ~/environment/aws-mlflow-sagemaker-cdk/cdk
@@ -312,6 +310,12 @@ cdk destroy --all
 ```
 
 At the prompt, enter `y`.
+
+There might be cases when the cleanup might not work.
+Usually, this is due to the creation of different SageMaker Studio KernelApps than the ones have been provisioned by the CDK stack.
+In this case, you should first delete all `KernelApp` on all user profiles manually, and then try again to destroy the stack as explained earlier.
+
+Cost of running this sample: not yet evaluated.
 
 ## Conclusion
 
