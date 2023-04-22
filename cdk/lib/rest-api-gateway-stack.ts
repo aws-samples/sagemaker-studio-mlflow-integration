@@ -108,7 +108,8 @@ export class RestApiGatewayStack extends cdk.Stack {
       entry: './lambda/authorizer/', // required
       runtime: lambda.Runtime.PYTHON_3_9, // required
       index: 'index.py', // optional, defaults to 'index.py'
-      handler: 'handler', // optional, defaults to 'handler'
+      handler: 'handler', // optional, defaults to 'handler',
+      reservedConcurrentExecutions: 100, // change as you see it fit
       environment: { 
         REGION: this.region, 
         ACCOUNT: this.account,
