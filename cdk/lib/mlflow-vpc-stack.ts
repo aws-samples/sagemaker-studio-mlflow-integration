@@ -127,7 +127,13 @@ export class MLflowVpcStack extends cdk.Stack {
     });
 
     // DB SecurityGroup
-    const dbClusterSecurityGroup = new ec2.SecurityGroup(this, 'DBClusterSecurityGroup', { vpc: this.vpc });
+    const dbClusterSecurityGroup = new ec2.SecurityGroup(this, 'DBClusterSecurityGroup', 
+      {
+        vpc: this.vpc,
+        allowAllOutbound: false
+      }
+    );
+
     dbClusterSecurityGroup.addIngressRule(ec2.Peer.ipv4(cidr), ec2.Port.tcp(dbPort));
 
     const dbConfig = {
@@ -283,13 +289,12 @@ export class MLflowVpcStack extends cdk.Stack {
       },
     ])
 
-    // 👇 Security Group
+    // Security Group
     const mlflowServiceSecGrp = new ec2.SecurityGroup(
       this,
       "mlflowServiceSecurityGroup",
       {
-        allowAllOutbound: true,
-        securityGroupName: "mlflowServiceSecurityGroup",
+        allowAllOutbound: false,
         vpc: this.vpc,
       }
     );
