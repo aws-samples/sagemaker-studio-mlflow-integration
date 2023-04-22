@@ -85,6 +85,7 @@ export class MLflowVpcStack extends cdk.Stack {
       autoDeleteObjects: true,
       encryption: s3.BucketEncryption.KMS_MANAGED,
       enforceSSL: true,
+      objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_PREFERRED
     })
 
     // mlflow S3 bucket
@@ -294,7 +295,6 @@ export class MLflowVpcStack extends cdk.Stack {
       this,
       "mlflowServiceSecurityGroup",
       {
-        allowAllOutbound: false,
         vpc: this.vpc,
       }
     );
@@ -330,8 +330,7 @@ export class MLflowVpcStack extends cdk.Stack {
     // NLB Listener
     this.httpApiListener = this.httpApiInternalNLB.addListener("httpapiListener", {
       port: 80,
-      protocol: Protocol.TCP,
-
+      protocol: Protocol.TCP
     });
     
     // 👇 Target Groups
