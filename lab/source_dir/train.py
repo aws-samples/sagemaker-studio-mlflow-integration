@@ -20,6 +20,7 @@ import time
 from smexperiments.tracker import Tracker
 
 logging.basicConfig(level=logging.INFO)
+logging.getLogger("mlflow").setLevel(logging.INFO)
 
 tracking_uri = os.environ.get('MLFLOW_TRACKING_URI')
 experiment_name = os.environ.get('MLFLOW_EXPERIMENT_NAME')
