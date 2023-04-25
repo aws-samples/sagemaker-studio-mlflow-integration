@@ -388,14 +388,14 @@ export class MLflowVpcStack extends cdk.Stack {
     NagSuppressions.addResourceSuppressions(this.accessLogs, [
       {
         id: 'AwsSolutions-S1',
-        reason: 'This is an access log bucket'
+        reason: 'This is a already an access log bucket'
       }
     ])
 
     NagSuppressions.addResourceSuppressions(rdsCluster, [
       {
         id: 'AwsSolutions-RDS11',
-        reason: 'Obfuscating the standard postgres port would make the solution less readable'
+        reason: 'We want to avoid creating confusion by obfuscating the standard Postgres port'
       },
       {
         id: 'AwsSolutions-RDS10',
@@ -403,7 +403,7 @@ export class MLflowVpcStack extends cdk.Stack {
       },
       {
         id: 'AwsSolutions-RDS6',
-        reason: 'MLflow does not support IAM authentication for Postgres'
+        reason: 'MLflow does not support IAM authentication for the DB layer'
       }
     ])
 

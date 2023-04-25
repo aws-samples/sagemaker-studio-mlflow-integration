@@ -17,6 +17,9 @@ import urllib.request
 from jose import jwk, jwt
 from jose.utils import base64url_decode
 import re
+import logging
+
+logging.basicConfig(level=logging.INFO) # change me to DEBUG and redeploy if needed
 
 REGION = os.environ['REGION']
 APP_CLIENT_ID = os.environ['APP_CLIENT_ID']
@@ -41,7 +44,7 @@ def verify_token(token):
             key_index = i
             break
     if key_index == -1:
-        print('Public key not found in jwks.json')
+        logging.info('Public key not found in jwks.json')
         return False
     # construct the public key
     public_key = jwk.construct(keys[key_index])
@@ -52,19 +55,19 @@ def verify_token(token):
     decoded_signature = base64url_decode(encoded_signature.encode('utf-8'))
     # verify the signature
     if not public_key.verify(message.encode("utf8"), decoded_signature):
-        print('Signature verification failed')
+        logging.info('Signature verification failed')
         return False
-    print('Signature successfully verified')
+
     # since we passed the verification, we can now safely
     # use the unverified claims
     claims = jwt.get_unverified_claims(token)
     # additionally we can verify the token expiration
     if time.time() > claims['exp']:
-        print('Token is expired')
+        logging.info('Token is expired')
         return False
     # and the Audience  (use claims['client_id'] if verifying an access token)
     if claims['aud'] != APP_CLIENT_ID:
-        print('Token was not issued for this audience')
+        logging.info('Token was not issued for this audience')
         return False
     # now we can use the claims: DO NOT PRINT FOR PRODUCTION
     # print(claims)
@@ -101,7 +104,7 @@ def handler(event, context):
     policy.stage = apiGatewayArnTmp[1]
     
     groups = claims['cognito:groups']
-    
+    logging.debug(f"cognito group extracted: {groups}")
     # Add your custom logic here
     # For example, you could depict a strategy based on experiment. However,
     # to verify if an individual run, or a model-version, or an artifact belongs to a run,
@@ -125,7 +128,7 @@ def handler(event, context):
         policy.allowMethod(HttpVerb.GET, f"/get-artifact")
         policy.allowMethod(HttpVerb.GET, f"/model-versions/*")
     else:
-        print('Unknown user group')
+        logging.info('Unknown user group')
         return False
 
     # Finally, build the policy
@@ -144,7 +147,7 @@ def handler(event, context):
     #authResponse['context'] = context
 
     # Check policy generated for this request
-    print(authResponse)
+    logging.debug(f"policy built for this request: {authResponse}")
     return authResponse
 
 class HttpVerb:

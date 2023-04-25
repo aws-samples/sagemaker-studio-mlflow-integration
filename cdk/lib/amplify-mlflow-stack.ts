@@ -8,6 +8,7 @@ import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as codecommit from "aws-cdk-lib/aws-codecommit";
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as cr from 'aws-cdk-lib/custom-resources';
+import * as iam from 'aws-cdk-lib/aws-iam';
 
 import { IdentityPool } from '@aws-cdk/aws-cognito-identitypool-alpha';
 import { NagSuppressions } from 'cdk-nag'
@@ -112,10 +113,32 @@ export class AmplifyMlflowStack extends cdk.Stack {
         status: amplify.RedirectStatus.REWRITE
     })
     
-    const buildTrigger = new cr.AwsCustomResource(this, 'triggerAppBuild', {
-        policy: cr.AwsCustomResourcePolicy.fromSdkCalls({
-            resources: [`arn:aws:amplify:${this.region}:${this.account}:apps/${amplifyApp.appId}/branches/main/jobs/*`]
+    const lambdaBuildTriggerRole = new iam.Role(this, "lambdaAuthorizerRole", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+      inlinePolicies: {
+        cloudWatch: new iam.PolicyDocument({
+          statements:[
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              resources: [`arn:aws:logs:${this.region}:${this.account}:*`],
+              actions: [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+              ]
+            }),
+            new iam.PolicyStatement({
+                effect: iam.Effect.ALLOW,
+                resources: [`arn:aws:amplify:${this.region}:${this.account}:apps/${amplifyApp.appId}/branches/main/jobs/*`],
+                actions: ["amplify:StartJob"]
+            })
+          ]
         }),
+      }
+    })
+
+    const buildTrigger = new cr.AwsCustomResource(this, 'triggerAppBuild', {
+        role: lambdaBuildTriggerRole,
         onCreate: {
             service: 'Amplify',
             action: 'startJob',
@@ -135,11 +158,11 @@ export class AmplifyMlflowStack extends cdk.Stack {
       stringValue: `https://main.${amplifyApp.defaultDomain}`
     });
 
-    NagSuppressions.addResourceSuppressions(buildTrigger, [
+    NagSuppressions.addResourceSuppressions(lambdaBuildTriggerRole, [
         {
             id: 'AwsSolutions-IAM5',
             reason: 'Permissions needed by the lambda function to trigger the first build job',
         }
-    ], true)
+    ])
 }
 }

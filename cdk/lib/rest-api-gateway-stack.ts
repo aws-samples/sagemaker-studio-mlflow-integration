@@ -9,6 +9,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as logs from "aws-cdk-lib/aws-logs";
 import * as lambdapython from '@aws-cdk/aws-lambda-python-alpha';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import { IdentityPool, UserPoolAuthenticationProvider } from '@aws-cdk/aws-cognito-identitypool-alpha';
 
 import { NagSuppressions } from 'cdk-nag'
@@ -104,12 +105,32 @@ export class RestApiGatewayStack extends cdk.Stack {
       }
     )
 
+    const lambdaAuthorizerRole = new iam.Role(this, "lambdaAuthorizerRole", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+      inlinePolicies: {
+        cloudWatch: new iam.PolicyDocument({
+          statements:[
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              resources: [`arn:aws:logs:${this.region}:${this.account}:*`],
+              actions: [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+              ]
+            })
+          ]
+        }),
+      }
+    })
+
     const lambdaFunction = new lambdapython.PythonFunction(this, 'MyFunction', {
       entry: './lambda/authorizer/', // required
       runtime: lambda.Runtime.PYTHON_3_9, // required
       index: 'index.py', // optional, defaults to 'index.py'
       handler: 'handler', // optional, defaults to 'handler',
       reservedConcurrentExecutions: 100, // change as you see it fit
+      role: lambdaAuthorizerRole,
       environment: { 
         REGION: this.region, 
         ACCOUNT: this.account,
@@ -200,16 +221,6 @@ export class RestApiGatewayStack extends cdk.Stack {
       ]
     )
 
-    NagSuppressions.addResourceSuppressions(lambdaFunction, [
-        {
-          id: 'AwsSolutions-IAM4',
-          reason: 'Lambda Basic execution role needed to log to CloudWatch',
-          appliesTo: ['Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole']
-        }
-      ],
-      true
-    )
-
     NagSuppressions.addResourceSuppressions(this.restApi, [
         {
           id: 'AwsSolutions-APIG2',
@@ -223,14 +234,18 @@ export class RestApiGatewayStack extends cdk.Stack {
         {
           id: 'AwsSolutions-COG4',
           reason: 'The Proxy resource uses either a lambda authorizer (that validates the token with the Cognito User Pool or IAM_AUTH'
-        },
-        {
-          id: 'AwsSolutions-APIG4',
-          reason: 'Missing auth does not impact here the {proxy} resource and api/(proxy} have both authorization methods attached'
         }
       ],
       true
     )
+
+    NagSuppressions.addResourceSuppressions(lambdaAuthorizerRole, [
+      {
+        id: 'AwsSolutions-IAM5',
+        reason: 'Lambda Authorizer permissions to log to CloudWatch',
+        appliesTo: [`Resource::arn:aws:logs:${this.region}:${this.account}:*`]
+      }
+    ])
 
     new cdk.CfnOutput(this, "Rest API Output : ", {
       value: this.restApi.url,
