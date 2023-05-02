@@ -27,8 +27,8 @@ export class AmplifyMlflowStack extends cdk.Stack {
     super(scope, id, props);
 
     const repo = new codecommit.Repository(this, 'Repository', {
-        repositoryName: 'mlflow-2.2.1-patched',
-        description: 'MLflow v2.2.1 with cognito patch', // optional property
+        repositoryName: 'mlflow-2.3.1-patched',
+        description: 'MLflow v2.3.1 with cognito patch', // optional property
         code: codecommit.Code.fromDirectory('../mlflow/mlflow/server/js', 'main')
     });
 
@@ -63,10 +63,7 @@ export class AmplifyMlflowStack extends cdk.Stack {
                     artifacts: {
                         baseDirectory: 'build',
                         files: ['**/*'],
-                    },
-                    cache: {
-                        path: "node_modules/**/*"
-                    },
+                    }
                 },
             }]
         }),
@@ -78,7 +75,8 @@ export class AmplifyMlflowStack extends cdk.Stack {
             'REACT_APP_COGNITO_IDENTITY_POOL_ID': cognitoIdentityPool.identityPoolId,
             'AMPLIFY_USERPOOL_ID': cognitoUserPool.userPoolId,
             'AMPLIFY_IDENTITYPOOL_ID': cognitoIdentityPool.identityPoolId, 
-            'REACT_APP_COGNITO_USER_POOL_CLIENT_ID': cognitoUserPoolClient.userPoolClientId
+            'REACT_APP_COGNITO_USER_POOL_CLIENT_ID': cognitoUserPoolClient.userPoolClientId,
+            'NODE_OPTIONS': '--max_old_space_size=4096'
         },
         customResponseHeaders: [AccessControlAllowOriginHeader]
     })
