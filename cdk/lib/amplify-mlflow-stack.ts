@@ -48,7 +48,14 @@ export class AmplifyMlflowStack extends cdk.Stack {
                 frontend: {
                     phases: {
                         preBuild: {
-                            commands: ['yarn install'],
+                            commands: [
+                                'fallocate -l 4G /swapfile',
+                                'chmod 600 /swapfile',
+                                'mkswap /swapfile',
+                                'swapon /swapfile',
+                                'swapon -s',
+                                'yarn install'
+                            ],
                         },
                         build: {
                             commands: [
@@ -75,8 +82,7 @@ export class AmplifyMlflowStack extends cdk.Stack {
             'REACT_APP_COGNITO_IDENTITY_POOL_ID': cognitoIdentityPool.identityPoolId,
             'AMPLIFY_USERPOOL_ID': cognitoUserPool.userPoolId,
             'AMPLIFY_IDENTITYPOOL_ID': cognitoIdentityPool.identityPoolId, 
-            'REACT_APP_COGNITO_USER_POOL_CLIENT_ID': cognitoUserPoolClient.userPoolClientId,
-            'NODE_OPTIONS': '--max_old_space_size=4096'
+            'REACT_APP_COGNITO_USER_POOL_CLIENT_ID': cognitoUserPoolClient.userPoolClientId
         },
         customResponseHeaders: [AccessControlAllowOriginHeader]
     })
