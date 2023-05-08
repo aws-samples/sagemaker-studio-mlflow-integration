@@ -331,7 +331,11 @@ There might be cases when the cleanup might not work.
 Usually, this is due to the creation of different SageMaker Studio KernelApps than the ones have been provisioned by the CDK stack.
 In this case, you should first delete all `KernelApp` on all user profiles manually, and then try again to destroy the stack as explained earlier.
 
-Cost of running this sample: not yet evaluated.
+Cost of just running this sample: < 10$.
+The biggest cost driver in this sample are the 3 `KernelGateway` apps initialized for the SageMaker Studio Domain.
+To save costs, you can delete the 3 `KernelGateway` apps, one for each user profile, that spins up a `ml.t3.medium` instance type each.
+They can be deleted from the console, and they are named as `instance-mlflow-basepython-2-0-ml-t3-medium`.
+Alternatively, you could install the [sagemaker-studio-auto-shutdown-extension](https://github.com/aws-samples/sagemaker-studio-auto-shutdown-extension) to save on costs.
 
 ## Conclusion
 
