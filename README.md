@@ -1,3 +1,5 @@
+This sample corresponds to the AWS Blog Post [Securing MLflow in AWS: Fine-grained access control with AWS native services](https://aws.amazon.com/blogs/machine-learning/securing-mlflow-in-aws-fine-grained-access-control-with-aws-native-services/)
+
 # Secure MLflow in AWS with native AWS services
 
 We aim to demostrate how it is possible to achieve a hybrid architecture using different tools to enable end-to-end Machine Learning workflows.
