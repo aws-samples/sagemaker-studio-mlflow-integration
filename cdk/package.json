@@ -11,7 +11,7 @@
     "cdk": "cdk"
   },
   "devDependencies": {
-    "aws-cdk-lib": "2.75.1",
+    "aws-cdk-lib": "2.80.0",
     "@aws-cdk/aws-amplify-alpha": "2.75.1-alpha.0",
     "@aws-cdk/aws-cognito-identitypool-alpha": "2.75.1-alpha.0",
     "@aws-cdk/aws-lambda-python-alpha": "2.75.1-alpha.0",
