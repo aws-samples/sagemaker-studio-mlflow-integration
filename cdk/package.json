@@ -5,23 +5,16 @@
     "cdk": "bin/cdk.js"
   },
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc -w",
-    "test": "jest",
     "cdk": "cdk"
   },
   "devDependencies": {
-    "aws-cdk-lib": "2.75.1",
-    "@aws-cdk/aws-amplify-alpha": "2.75.1-alpha.0",
-    "@aws-cdk/aws-cognito-identitypool-alpha": "2.75.1-alpha.0",
-    "@aws-cdk/aws-lambda-python-alpha": "2.75.1-alpha.0",
-    "@types/jest": "^26.0.10",
+    "aws-cdk-lib": "2.86.0",
+    "@aws-cdk/aws-amplify-alpha": "2.86.0-alpha.0",
+    "@aws-cdk/aws-cognito-identitypool-alpha": "2.86.0-alpha.0",
+    "@aws-cdk/aws-lambda-python-alpha": "2.86.0-alpha.0",
     "@types/node": "10.17.27",
     "cdk-nag": "2.25.5",
-    "aws-cdk": "2.22.0",
-    "jest": "^26.4.2",
-    "ts-jest": "^26.2.0",
-    "ts-node": "^9.0.0",
+    "aws-cdk": "2.86.0",
     "typescript": "~3.9.7"
   },
   "dependencies": {
