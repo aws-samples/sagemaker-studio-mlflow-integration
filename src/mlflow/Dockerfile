@@ -1,7 +1,7 @@
 FROM python:3.9.0
 
 RUN pip install \
-    mlflow==2.5.0\
+    mlflow==2.8.0\
     boto3 \
     psycopg2==2.9.5
 
