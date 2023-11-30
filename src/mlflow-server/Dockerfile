@@ -1,17 +1,19 @@
-FROM python:3.9.0
+FROM python:3.11.0
+
+ARG PORT=5000
 
 RUN pip install \
     mlflow==2.8.0\
     boto3 \
     psycopg2==2.9.5
 
-RUN mkdir /mlflow/
+WORKDIR /mlflow/
 
 EXPOSE 5000
 
 CMD mlflow server \
     --host 0.0.0.0 \
-    --port 5000 \
+    --port ${PORT} \
     --default-artifact-root ${BUCKET} \
     --gunicorn-opts "--log-level debug --timeout 180 --workers=2 --threads=4 --worker-class=gthread" \
-    --backend-store-uri postgresql+psycopg2://${USERNAME}:${PASSWORD}@${HOST}:${PORT}/${DATABASE}
+    --backend-store-uri postgresql+psycopg2://${USERNAME}:${PASSWORD}@${DBHOST}:${DBPORT}/${DATABASE}

@@ -12,20 +12,29 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import { CfnDBCluster, CfnDBSubnetGroup } from 'aws-cdk-lib/aws-rds';
 
 import { NagSuppressions } from 'cdk-nag'
+import {Platform} from "aws-cdk-lib/aws-ecr-assets";
 
 const { Protocol } = elbv2;
 const dbName = "mlflowdb"
 const dbPort = 5432
 const dbUsername = "master"
 const clusterName = "mlflowCluster"
-const serviceName = "mlflowService"
+const mlflowServerServiceName = "mlflowServerService"
+const mlflowGatewayServiceName = "mlflowGatewayService"
 const cidr = "10.0.0.0/16"
-const containerPort = 5000
+const mlflowContainerPort = 5000
+const gatewayContainerPort = 5001
+const listenerMlflowPort= 8080
+const listenerMlflowGatewayPort = 8081
+const gatewayPrivateHostname = "mlflow-gateway"
+const serverPrivateHostname = "mlflow-server"
+const privateHostname = 'api.local'
 
 export class MLflowVpcStack extends cdk.Stack {
 
   // Export Vpc, ALB Listener, and Mlflow secret ARN
-  public readonly httpApiListener: elbv2.NetworkListener;
+  public readonly httpMlflowServerListener: elbv2.NetworkListener;
+  public readonly httpMlflowGatewayListener: elbv2.NetworkListener;
   public readonly vpc: ec2.Vpc;
   public readonly httpApiInternalNLB: elbv2.NetworkLoadBalancer;
   public readonly accessLogs: s3.Bucket;
@@ -34,12 +43,12 @@ export class MLflowVpcStack extends cdk.Stack {
   readonly accesslogBucketName = `accesslogs-${this.account}-${this.region}`
 
   constructor(
-    scope: Construct, 
+    scope: Construct,
     id: string,
     props?: cdk.StackProps
   ) {
     super(scope, id, props);
-    
+
     const logGroup = new logs.LogGroup(this, 'MyVpcLogGroup');
 
     const flowLogsRole = new iam.Role(this, 'flowLogsRole', {
@@ -70,12 +79,12 @@ export class MLflowVpcStack extends cdk.Stack {
         },
       ],
     });
-    
+
     new ec2.FlowLog(this, 'FlowLog', {
       resourceType: ec2.FlowLogResourceType.fromVpc(this.vpc),
       destination: ec2.FlowLogDestination.toCloudWatchLogs(logGroup, flowLogsRole)
     });
-    
+
     this.accessLogs = new s3.Bucket(this, "accessLogs", {
       versioned: false,
       bucketName: this.accesslogBucketName,
@@ -128,7 +137,7 @@ export class MLflowVpcStack extends cdk.Stack {
     });
 
     // DB SecurityGroup
-    const dbClusterSecurityGroup = new ec2.SecurityGroup(this, 'DBClusterSecurityGroup', 
+    const dbClusterSecurityGroup = new ec2.SecurityGroup(this, 'DBClusterSecurityGroup',
       {
         vpc: this.vpc,
         allowAllOutbound: false
@@ -138,7 +147,7 @@ export class MLflowVpcStack extends cdk.Stack {
     dbClusterSecurityGroup.addIngressRule(ec2.Peer.ipv4(cidr), ec2.Port.tcp(dbPort));
 
     const dbConfig = {
-      dbClusterIdentifier: `${serviceName}-cluster`,
+      dbClusterIdentifier: `${mlflowServerServiceName}-cluster`,
       engineMode: 'serverless',
       engine: 'aurora-postgresql',
       engineVersion: '11.16',
@@ -160,23 +169,48 @@ export class MLflowVpcStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY // Delete everything
     };
 
-    // 👇 RDS Cluster 
+    // 👇 RDS Cluster
     const rdsCluster = new CfnDBCluster(this, 'DBCluster', dbConfig);
     rdsCluster.addDependency(dbSubnetGroup)
 
     // 👇 ECS Cluster
-    const cluster = new ecs.Cluster(this, "Fargate Cluster", {
+    const cluster = new ecs.Cluster(this, "MLflowCluster", {
       vpc: this.vpc,
       clusterName: clusterName,
       containerInsights: true
     });
+
+    // Network Load Balancer
+    this.httpApiInternalNLB = new elbv2.NetworkLoadBalancer(
+      this,
+      "httpapiInternalALB",
+      {
+        vpc: this.vpc,
+        internetFacing: false,
+      }
+    );
+
+    // Security Group
+    const mlflowSecGrp = new ec2.SecurityGroup(
+      this,
+      "mlflowServiceSecurityGroup",
+      {
+        vpc: this.vpc,
+      }
+    );
+
+    mlflowSecGrp.addIngressRule(ec2.Peer.ipv4(cidr), ec2.Port.tcp(mlflowContainerPort), 'Allow internal access to the mlflow server port');
+    mlflowSecGrp.addIngressRule(ec2.Peer.ipv4(cidr), ec2.Port.tcp(gatewayContainerPort), 'Allow internal access to the mlflow gateway port');
+    mlflowSecGrp.addIngressRule(ec2.Peer.ipv4(cidr), ec2.Port.tcp(listenerMlflowPort), 'Allow internal access to the container port');
+    mlflowSecGrp.addIngressRule(ec2.Peer.ipv4(cidr), ec2.Port.tcp(listenerMlflowGatewayPort), 'Allow internal access to the container port');
+
 
     // 👇 Cloud Map Namespace
     const dnsNamespace = new servicediscovery.PrivateDnsNamespace(
       this,
       "DnsNamespace",
       {
-        name: "http-api.local",
+        name: privateHostname,
         vpc: this.vpc,
         description: "Private DnsNamespace for Microservices",
       }
@@ -187,7 +221,7 @@ export class MLflowVpcStack extends cdk.Stack {
     };
 
     // 👇 Fargate Task Role
-    const taskrole = new iam.Role(this, "ecsTaskExecutionRole", {
+    const mlflowServertaskrole = new iam.Role(this, "ecsTaskExecutionRole", {
       assumedBy: new iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AmazonECSTaskExecutionRolePolicy")
@@ -233,138 +267,256 @@ export class MLflowVpcStack extends cdk.Stack {
       }
     });
 
-    // 👇 Task Definitions
-    const mlflowTaskDefinition = new ecs.FargateTaskDefinition(
+    const mlflowGatewaytaskrole = new iam.Role(this, "mlflowGatewaytaskrole", {
+      assumedBy: new iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AmazonECSTaskExecutionRolePolicy")
+      ],
+      inlinePolicies: {
+        secretsManagerRestricted: new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              resources: [
+                "*" //TODO: Add ARNs of API keys
+              ],
+              actions: [
+                "secretsmanager:GetResourcePolicy",
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+                "secretsmanager:ListSecretVersionIds"
+              ]
+            }),
+          ]
+        }),
+        bedrock: new iam.PolicyDocument({
+          statements: [
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              resources: [
+                "*"
+              ],
+              actions: [
+                  "bedrock:InvokeModel",
+                  "bedrock:InvokeModelWithResponseStream"
+              ]
+            }),
+          ]
+        })
+      }
+    });
+
+    // MLflow server Task Definitions
+    const mlflowServerTaskDefinition = new ecs.FargateTaskDefinition(
       this,
-      "mlflowTaskDef",
+      "mlflowServerTaskDef",
       {
-        taskRole: taskrole.withoutPolicyUpdates(withoutPolicyUpdatesOptions),
-        executionRole: taskrole.withoutPolicyUpdates(withoutPolicyUpdatesOptions),
-        family: "mlFlowStack",
+        taskRole: mlflowServertaskrole.withoutPolicyUpdates(withoutPolicyUpdatesOptions),
+        executionRole: mlflowServertaskrole.withoutPolicyUpdates(withoutPolicyUpdatesOptions),
+        family: "MlflowServerStack",
+        cpu: 512,
+        memoryLimitMiB: 1024
+      },
+    );
+
+    // MLflow server Task Definitions
+    const mlflowGatewayTaskDefinition = new ecs.FargateTaskDefinition(
+      this,
+      "mlflowGatewayTaskDef",
+      {
+        taskRole: mlflowGatewaytaskrole.withoutPolicyUpdates(withoutPolicyUpdatesOptions),
+        executionRole: mlflowGatewaytaskrole.withoutPolicyUpdates(withoutPolicyUpdatesOptions),
+        family: "MlflowGatewayStack",
         cpu: 512,
         memoryLimitMiB: 1024
       },
     );
 
     // 👇 Log Groups
-    const mlflowServiceLogGroup = new logs.LogGroup(this, "mlflowServiceLogGroup", {
-      logGroupName: "/ecs/mlflowService",
+    const mlflowServerServiceLogGroup = new logs.LogGroup(this, "mlflowServiceLogGroup", {
+      logGroupName: "/ecs/mlflowServerService",
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    const mlflowServiceLogDriver = new ecs.AwsLogDriver({
-      logGroup: mlflowServiceLogGroup,
-      streamPrefix: "mlflowService",
+    // 👇 Log Groups
+    const mlflowGatewayServiceLogGroup = new logs.LogGroup(this, "mlflowGatewayLogGroup", {
+      logGroupName: "/ecs/mlflowGatewayService",
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
-    
-    // 👇 MlFlow Task Container
-    const mlflowServiceContainer = mlflowTaskDefinition.addContainer(
-      "mlflowContainer",
+
+    const mlflowServerServiceLogDriver = new ecs.AwsLogDriver({
+      logGroup: mlflowServerServiceLogGroup,
+      streamPrefix: "mlflowServerService",
+    });
+
+    const mlflowGatewayServiceLogDriver = new ecs.AwsLogDriver({
+      logGroup: mlflowGatewayServiceLogGroup,
+      streamPrefix: "mlflowGatewayService",
+    });
+
+    // MlFlow Task Container
+    const mlflowServerServiceContainer = mlflowServerTaskDefinition.addContainer(
+      "mlflowServerContainer",
       {
-        containerName: "mlflowContainer",
+        containerName: "mlflowServerContainer",
         essential: true,
         memoryReservationMiB: 1024,
         cpu: 512,
         portMappings: [{
-          containerPort: containerPort,
+          containerPort: mlflowContainerPort,
           protocol: ecs.Protocol.TCP,
         }],
-        image: ecs.ContainerImage.fromAsset('../src/mlflow', {}),
+        image: ecs.ContainerImage.fromAsset('../src/mlflow-server', {
+          platform: Platform.LINUX_AMD64,
+          buildArgs: {
+            PORT: `${mlflowContainerPort}`
+          }
+        }),
         environment: {
+          'PORT': `${mlflowContainerPort}`,
           'BUCKET': `s3://${mlFlowBucket.bucketName}`,
-          'HOST': rdsCluster.attrEndpointAddress,
-          'PORT': `${dbPort}`,
-          'DATABASE': dbName
+          'DBHOST': rdsCluster.attrEndpointAddress,
+          'DBPORT': `${dbPort}`,
+          'DATABASE': dbName,
+          'MLFLOW_GATEWAY_URI': `http://${gatewayPrivateHostname}.${privateHostname}:${gatewayContainerPort}`
         },
         secrets: {
           USERNAME: ecs.Secret.fromSecretsManager(databaseCredentialsSecret, 'username'),
           PASSWORD: ecs.Secret.fromSecretsManager(databaseCredentialsSecret, 'password')
         },
-        logging: mlflowServiceLogDriver,
+        logging: mlflowServerServiceLogDriver,
       });
 
-    NagSuppressions.addResourceSuppressions(mlflowServiceContainer, [
+        // MlFlow Task Container
+    const mlflowGatewayServiceContainer = mlflowGatewayTaskDefinition.addContainer(
+      "mlflowGatewayContainer",
       {
-        id: 'AwsSolutions-ECS2',
-        reason: 'ENV variables passed do not contain secrets'
-      },
-    ])
+        containerName: "mlflowGatewayContainer",
+        essential: true,
+        memoryReservationMiB: 1024,
+        cpu: 512,
+        portMappings: [{
+          containerPort: gatewayContainerPort,
+          protocol: ecs.Protocol.TCP,
+        }],
+        image: ecs.ContainerImage.fromAsset('../src/mlflow-gateway', {
+          platform: Platform.LINUX_AMD64,
+          buildArgs: {
+            PORT: `${gatewayContainerPort}`
+          }
+        }),
+        environment: {
+          'PORT': `${gatewayContainerPort}`,
+          'WORKERS': '5',
+          'AWS_BEDROCK_REGION': `${process.env['AWS_BEDROCK_REGION'] || this.region}`
+        },
+        secrets: {
+        },
+        logging: mlflowGatewayServiceLogDriver,
+      });
 
-    // Security Group
-    const mlflowServiceSecGrp = new ec2.SecurityGroup(
-      this,
-      "mlflowServiceSecurityGroup",
-      {
-        vpc: this.vpc,
-      }
-    );
-
-    mlflowServiceSecGrp.addIngressRule(ec2.Peer.ipv4(cidr), ec2.Port.tcp(containerPort), 'Allow internal access to the container port');
-    mlflowServiceSecGrp.addIngressRule(ec2.Peer.ipv4(cidr), ec2.Port.tcp(80), 'Allow internal access to the container port');
-
-
-    // 👇 Fargate Services
-    const mlflowService = new ecs.FargateService(this, "mlflowService", {
+    // MLflow server Services
+    const mlflowServerService = new ecs.FargateService(this, "mlflowServerService", {
       cluster: cluster,
-      serviceName: serviceName,
-      taskDefinition: mlflowTaskDefinition,
+      serviceName: mlflowServerServiceName,
+      taskDefinition: mlflowServerTaskDefinition,
       assignPublicIp: false,
       desiredCount: 2,
-      securityGroups: [mlflowServiceSecGrp],
+      securityGroups: [mlflowSecGrp],
       cloudMapOptions: {
-        name: "mlflowService",
+        name: serverPrivateHostname,
         cloudMapNamespace: dnsNamespace,
       },
     });
 
-    // 👇 NLB
-    this.httpApiInternalNLB = new elbv2.NetworkLoadBalancer(
-      this,
-      "httpapiInternalALB",
-      {
-        vpc: this.vpc,
-        internetFacing: false,
-      }
-    );
+    // MLflow gateway Services
+    const mlflowGatewayService = new ecs.FargateService(this, "mlflowGatewayService", {
+      cluster: cluster,
+      serviceName: mlflowGatewayServiceName,
+      taskDefinition: mlflowGatewayTaskDefinition,
+      assignPublicIp: false,
+      desiredCount: 2,
+      securityGroups: [mlflowSecGrp],
+      cloudMapOptions: {
+        name: gatewayPrivateHostname,
+        cloudMapNamespace: dnsNamespace,
+      },
+    });
 
-    // NLB Listener
-    this.httpApiListener = this.httpApiInternalNLB.addListener("httpapiListener", {
-      port: 80,
+    // NLB MLflow server Listener
+    this.httpMlflowServerListener = this.httpApiInternalNLB.addListener("httpMlflowServerListener", {
+      port: listenerMlflowPort,
       protocol: Protocol.TCP
     });
-    
-    // 👇 Target Groups
-    const mlflowServiceTargetGroup = this.httpApiListener.addTargets(
+
+    // NLB MLflow Gateway Listener
+    this.httpMlflowGatewayListener = this.httpApiInternalNLB.addListener("httpMlflowGatewayListener", {
+      port: listenerMlflowGatewayPort,
+      protocol: Protocol.TCP
+    });
+
+    // MLflow server Target Groups
+    const mlflowServiceTargetGroup = this.httpMlflowServerListener.addTargets(
       "mlflowServiceTargetGroup",
       {
         targets: [
-          mlflowService.loadBalancerTarget(
+          mlflowServerService.loadBalancerTarget(
             {
-              containerName: 'mlflowContainer',
-              containerPort: 5000
+              containerName: 'mlflowServerContainer',
+              containerPort: mlflowContainerPort
             }
           )
         ],
-        port: 80,
+        port: listenerMlflowPort,
       }
     );
 
-    // 👇 Task Auto Scaling
-    const autoScaling = mlflowService.autoScaleTaskCount({ maxCapacity: 6 });
-    autoScaling.scaleOnCpuUtilization('CpuScaling', {
+    // MLflow gateway Target Groups
+    const mlflowGatewayTargetGroup = this.httpMlflowGatewayListener.addTargets(
+      "mlflowGatewayTargetGroup",
+      {
+        targets: [
+          mlflowGatewayService.loadBalancerTarget(
+            {
+              containerName: 'mlflowGatewayContainer',
+              containerPort: gatewayContainerPort
+            }
+          )
+        ],
+        port: listenerMlflowGatewayPort,
+      }
+    );
+    // MLflow server Task Auto Scaling
+    const mlflowServerAutoScaling = mlflowServerService.autoScaleTaskCount({ maxCapacity: 6 });
+    mlflowServerAutoScaling.scaleOnCpuUtilization('MlflowServerCpuScaling', {
       targetUtilizationPercent: 70,
       scaleInCooldown: cdk.Duration.seconds(60),
       scaleOutCooldown: cdk.Duration.seconds(60),
     });
 
-    NagSuppressions.addResourceSuppressions(mlflowTaskDefinition, [
+    // MLflow gateway Task Auto Scaling
+    const mlflowGatewayAutoScaling = mlflowGatewayService.autoScaleTaskCount({ maxCapacity: 6 });
+    mlflowGatewayAutoScaling.scaleOnCpuUtilization('MlflowGatewayCpuScaling', {
+      targetUtilizationPercent: 70,
+      scaleInCooldown: cdk.Duration.seconds(60),
+      scaleOutCooldown: cdk.Duration.seconds(60),
+    });
+
+    NagSuppressions.addResourceSuppressions(mlflowServerTaskDefinition, [
       {
         id: 'AwsSolutions-ECS2',
         reason: 'ENV variables passed do not contain secrets'
       },
     ])
-    
-    NagSuppressions.addResourceSuppressions(taskrole, [
+
+    NagSuppressions.addResourceSuppressions(mlflowGatewayTaskDefinition, [
+      {
+        id: 'AwsSolutions-ECS2',
+        reason: 'ENV variables passed do not contain secrets'
+      },
+    ])
+
+    NagSuppressions.addResourceSuppressions(mlflowServertaskrole, [
       {
         id: 'AwsSolutions-IAM5',
         reason: 'The task owns this bucket and it should have full permissions on the objects',
@@ -377,14 +529,28 @@ export class MLflowVpcStack extends cdk.Stack {
       }
     ]
     )
-    
+
+        NagSuppressions.addResourceSuppressions(mlflowGatewaytaskrole, [
+      {
+        id: 'AwsSolutions-IAM5',
+        reason: 'The task owns this bucket and it should have full permissions on the objects',
+        appliesTo: [`Resource::*`]
+      },
+      {
+        id: 'AwsSolutions-IAM4',
+        reason: 'The task needs access to this managed policy',
+        appliesTo: ['Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy']
+      }
+    ]
+    )
+
     NagSuppressions.addResourceSuppressions(databaseCredentialsSecret, [
       {
         id: 'AwsSolutions-SMG4',
         reason: 'MLflow does not support database credentials rotation'
       }
     ])
-    
+
     NagSuppressions.addResourceSuppressions(this.accessLogs, [
       {
         id: 'AwsSolutions-S1',
