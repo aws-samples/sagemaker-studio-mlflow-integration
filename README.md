@@ -1,17 +1,21 @@
 This sample corresponds to the AWS Blog Post [Securing MLflow in AWS: Fine-grained access control with AWS native services](https://aws.amazon.com/blogs/machine-learning/securing-mlflow-in-aws-fine-grained-access-control-with-aws-native-services/)
 
-# ChangeLog
+We regularly update this repository to align with the latest release on MLflow.
+The current last supported version of MLflow is `2.8.0`, including MLflow tracking server and MLflow Gateway AI.
+
+Check [CHANGELOG.md](CHANGELOG.md) for the latest changes.
+
 # Secure MLflow in AWS with native AWS services
 
-We aim to demostrate how it is possible to achieve a hybrid architecture using different tools to enable end-to-end Machine Learning workflows.
+We aim to demostrate how it is possible to achieve AuthN/AuthZ in MLflow with a hybrid architecture using different AWS services to enable end-to-end Machine Learning workflows.
 Specifically, we look at Amazon SageMaker and MLflow, and how they can be integrated securely without worrying about managing credentials by using IAM Roles and temporary credentials.
 
 ## Custom authentication and authorization on MLflow
 
 This sample shows how to do the following:
 
-* How to deploy MLflow on a serverless architecture (we build on top of [running MLflow on Fargate](https://github.com/aws-samples/amazon-sagemaker-mlflow-fargate))
-* How to expose a MLflow server via private integrations to an Amazon API Gateway (we build on top of [running MLflow on AWS](https://github.com/aws-samples/aws-mlflow-sagemaker-cdk))
+* How to deploy MLflow tracking server and MLflow gateway AI on a serverless architecture (we build on top of [running MLflow on Fargate](https://github.com/aws-samples/amazon-sagemaker-mlflow-fargate))
+* How to expose a MLflow tracking server and MLflow gateway AI via private integrations to an Amazon API Gateway (we build on top of [running MLflow on AWS](https://github.com/aws-samples/aws-mlflow-sagemaker-cdk))
 * How to add authentication and authorization for programmatic access and browser access to MLflow
 * How to access MLflow via SageMaker using SageMaker Execution Roles
 
@@ -27,7 +31,7 @@ This sample is made of 4 different stacks:
     * exposes the MLFlow server and gateway AI via a PrivateLink to an REST API Gateway.
     * deploys a Cognito User Pool to manage the users accessing the UI.
     * deploy a Lambda Authorizer to verify the JWT token with the Cognito User Pool ID keys and returns IAM policies to allow or deny a request.
-    * adds IAM Authorizer. This will be applied to the 
+    * adds IAM Authorizer for the MLflow client SDK routes. 
 * [`AmplifyMLflowStack`](./cdk/lib/amplify-mlflow-stack.ts)
     * creates an app with CI/CD capability to deploy the MLFLow UI
 * [`SageMakerStudioUserStack`](./cdk/lib/sagemaker-studio-user-stack.ts)
@@ -39,7 +43,7 @@ This sample is made of 4 different stacks:
 
 Our proposed architecture is shown Fig. 1
 
-![Architecture](./images/mlflow-architecture.png)
+![Architecture](./images/mlflow-gateway-architecture.png)
 *Fig. 1 - MLflow on AWS architecture diagram*
 
 ## Prerequisites
@@ -71,6 +75,7 @@ The CDK script expects the following ENV variables to be set
 ```bash
 AWS_REGION=<region-where-you-want-to-deploy>
 AWS_ACCOUNT=<AWS-account-where-you-want-to-deploy>
+AWS_BEDROCK_REGION=<AWS-region-where-you-want-to-access-bedrock>
 ```
 
 If you would like to use an existing SageMaker Studio domain, please set this ENV variable
@@ -167,6 +172,20 @@ cdk deploy --all --require-approval never
 To run this sample, we reccommend to deploy all 4 Stacks to test out the SageMaker integration.
 However, if you are only interested in the MLflow deployment (MLflow server, MLflow UI, and REST API Gateway), you can deploy only the first three stacks, i.e. [`MLflowVPCStack`](./cdk/lib/mlflow-vpc-stack.ts), [`RestApiGatewayStack`](./cdk/lib/rest-api-gateway-stack.ts) and [`AmplifyMLflowStack`](./cdk/lib/amplify-mlflow-stack.ts).
 
+## Amazon Bedrock requirements
+**Base Models Access**
+
+If you are looking to interact with models from Amazon Bedrock, you need to [request access to the base models in one of the regions where Amazon Bedrock is available](https://console.aws.amazon.com/bedrock/home?#/modelaccess).
+Make sure to read and accept models' end-user license agreements or EULA.
+
+Note:
+- You can deploy the solution to a different region from where you requested Base Model access. Please specify the `AWS_BEDROCK_REGION` env variable.
+- **While the Base Model access approval is instant, it might take several minutes to get access and see the list of models in the UI.**
+
+![sample](images/enable-models.gif)
+(Gif taken from https://github.com/aws-samples/aws-genai-llm-chatbot)
+
+
 ## Cognito User Pool and Lambda Authorizer
 
 We have provided a script that will populate the Cognito User Pool with 3 users, each belonging to a different group.
@@ -196,7 +215,7 @@ This is just an example on how authorization can be achieved, in fact, with a La
 If you want to restrict only a subset of actions, you need to be aware of the MLFlow REST API definition, which can be found [here](https://www.mlflow.org/docs/latest/rest-api.html)
 The code for the Lambda Authorizer can be explored [here](./cdk/lambda/authorizer/index.py)
 
-![MLflowCognito](./images/mlflow-cognito.png)
+![MLflowCognito](./images/mlflow-gateway-cognito.png)
 *Fig. 3 - MLflow login flow using AWS Amplify, Amazon Cognito and Lambda Authorizer on the API Gateway*
 
 ## *Integration with SageMaker*
@@ -215,7 +234,7 @@ Provisioning a new SageMaker Studio domain will do the following operations:
   * `mlflow-reader` - has associated an execution role with the similar permissions as the user in the cognito group `readers`
   * `mlflow-model-arrpover` - has associated an execution role with the similar permissions as the user in the cognito group `deny-all`
 
-![MLflowSageMaker](./images/mlflow-sagemaker.png)
+![MLflowSageMaker](./images/mlflow-gateway-sagemaker.png)
 *Fig. 3 - Accessing MLflow from SageMaker Studio and SageMaker Training Jobs using IAM Roles*
 
 ### Push the `mlflow-pyfunc` container to ECR
