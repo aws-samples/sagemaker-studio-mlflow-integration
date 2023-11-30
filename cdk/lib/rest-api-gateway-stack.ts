@@ -159,7 +159,7 @@ export class RestApiGatewayStack extends cdk.Stack {
           },
           passthroughBehavior: PassthroughBehavior.WHEN_NO_TEMPLATES
         },
-        uri: `http://${httpApiInternalNLB.loadBalancerDnsName}/{proxy}`
+        uri: `http://${httpApiInternalNLB.loadBalancerDnsName}:8080/{proxy}`
       }
     );
 
@@ -188,10 +188,13 @@ export class RestApiGatewayStack extends cdk.Stack {
           },
           passthroughBehavior: PassthroughBehavior.WHEN_NO_TEMPLATES
       },
-      uri: `http://${httpApiInternalNLB.loadBalancerDnsName}/api/{proxy}`
+      uri: `http://${httpApiInternalNLB.loadBalancerDnsName}:8080/api/{proxy}`
     });
 
-    this.restApi.root.addResource('api').addProxy({
+    // /api/
+    const apiResource = this.restApi.root.addResource('api')
+
+    apiResource.addProxy({
       defaultIntegration: apiIntegration,
       defaultMethodOptions: {
         requestParameters: {
@@ -202,6 +205,82 @@ export class RestApiGatewayStack extends cdk.Stack {
       // "false" will require explicitly adding methods on the `proxy` resource
       anyMethod: true // "true" is the default
     });
+
+    const routesApiGatewayIntegration = new apigateway.Integration(
+      {
+        type: apigateway.IntegrationType.HTTP_PROXY,
+        integrationHttpMethod: 'ANY',
+        options: {
+          connectionType: apigateway.ConnectionType.VPC_LINK,
+          vpcLink: link,
+          requestParameters: {
+            'integration.request.path.proxy': 'method.request.path.proxy'
+          },
+          passthroughBehavior: PassthroughBehavior.WHEN_NO_TEMPLATES
+      },
+      uri: `http://${httpApiInternalNLB.loadBalancerDnsName}:8081/api/2.0/gateway/routes/{proxy}`
+    });
+
+    const routesApiGatewayResourse = apiResource.addResource('2.0').addResource('gateway').addResource('routes')
+
+    const routesResourceIntegration = new apigateway.Integration(
+      {
+        type: apigateway.IntegrationType.HTTP_PROXY,
+        integrationHttpMethod: 'ANY',
+        options: {
+          connectionType: apigateway.ConnectionType.VPC_LINK,
+          vpcLink: link,
+          passthroughBehavior: PassthroughBehavior.WHEN_NO_TEMPLATES
+      },
+      uri: `http://${httpApiInternalNLB.loadBalancerDnsName}:8081/api/2.0/gateway/routes/`
+    });
+
+    // /api/2.0/gateway/routes/
+    routesApiGatewayResourse.addMethod(
+        'ANY',
+        routesResourceIntegration
+    )
+    routesApiGatewayResourse.addProxy({
+      defaultIntegration: routesApiGatewayIntegration,
+        defaultMethodOptions: {
+          requestParameters: {
+            'method.request.path.proxy': true
+          },
+          authorizationType: apigateway.AuthorizationType.IAM,
+        },
+        // "false" will require explicitly adding methods on the `proxy` resource
+        anyMethod: true // "true" is the default
+      });
+
+      // /gateway/{proxy+}
+      const gatewayIntegration = new apigateway.Integration(
+      {
+        type: apigateway.IntegrationType.HTTP_PROXY,
+        integrationHttpMethod: 'ANY',
+        options: {
+          connectionType: apigateway.ConnectionType.VPC_LINK,
+          vpcLink: link,
+          requestParameters: {
+            'integration.request.path.proxy': 'method.request.path.proxy'
+          },
+          passthroughBehavior: PassthroughBehavior.WHEN_NO_TEMPLATES
+      },
+      uri: `http://${httpApiInternalNLB.loadBalancerDnsName}:8081/gateway/{proxy}`
+    });
+
+    const gatewayResource = this.restApi.root.addResource('gateway')
+
+    gatewayResource.addProxy({
+      defaultIntegration: gatewayIntegration,
+        defaultMethodOptions: {
+          requestParameters: {
+            'method.request.path.proxy': true
+          },
+          authorizationType: apigateway.AuthorizationType.IAM,
+        },
+        // "false" will require explicitly adding methods on the `proxy` resource
+        anyMethod: true // "true" is the default
+      });
 
     const mlflowRestApiId = new ssm.StringParameter(this, 'mlflowRestApiId', {
       parameterName: 'mlflow-restApiId',
