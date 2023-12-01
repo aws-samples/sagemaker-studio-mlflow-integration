@@ -1,5 +1,6 @@
 This sample corresponds to the AWS Blog Post [Securing MLflow in AWS: Fine-grained access control with AWS native services](https://aws.amazon.com/blogs/machine-learning/securing-mlflow-in-aws-fine-grained-access-control-with-aws-native-services/)
 
+# ChangeLog
 # Secure MLflow in AWS with native AWS services
 
 We aim to demostrate how it is possible to achieve a hybrid architecture using different tools to enable end-to-end Machine Learning workflows.
@@ -20,10 +21,10 @@ Due to its modularity, this sample can be extended in a number of ways, and we w
 
 This sample is made of 4 different stacks:
 * [`MLflowVPCStack`](./cdk/lib/mlflow-vpc-stack.ts)
-    * deploys a MLfLow tracking server on a serverless infrastructure running on ECS and Fargate on a private subnet
+    * deploys MLfLow tracking server and MLflow gateway AI on a serverless infrastructure running on ECS and Fargate on a private subnet
     * deploys an Aurora Serverless database for the data store and S3 for the artifact store.
 * [`RestApiGatewayStack`](./cdk/lib/rest-api-gateway-stack.ts)
-    * exposes the MLFlow server via a PrivateLink to an REST API Gateway.
+    * exposes the MLFlow server and gateway AI via a PrivateLink to an REST API Gateway.
     * deploys a Cognito User Pool to manage the users accessing the UI.
     * deploy a Lambda Authorizer to verify the JWT token with the Cognito User Pool ID keys and returns IAM policies to allow or deny a request.
     * adds IAM Authorizer. This will be applied to the 
@@ -103,10 +104,11 @@ Amplify provides libraries that can be used to quickly add a login workflow, and
 We provide you a patch to be applied on top of MLflow `2.8.0` that adds Amplify React Components for authentication and how to add `Authorization` header with a `Bearer` token for every backend API call.
 The patch we provided can be checked [here](./cognito-mlflow_v2-8-0.patch) and it will enable a login flow backed by Amazon Cognito as shown in Fig. 2.
 **Note: we also provide patches for previous versions of MLflow
--`1.30.0`. If you want to install that version, you need to ensure mlflow `1.30.0` [here](./cognito-mlflow_v1-30-0.patch) installed throughout this sample, and you adapt the lab sample to work with that same version as the SDK for deploying a model to SageMaker has changed
--`2.2.1`. If you want to install that version, you need to ensure mlflow `2.2.1` [here](./cognito-mlflow_v2-2-1.patch) installed**
--`2.3.1`. If you want to install that version, you need to ensure mlflow `2.3.1` [here](./cognito-mlflow_v2-3-1.patch) installed**
--`2.5.0`. If you want to install that version, you need to ensure mlflow `2.5.0` [here](./cognito-mlflow_v2-5-0.patch) installed**
+
+* `1.30.0`. If you want to install that version, you need to ensure mlflow `1.30.0` [here](./cognito-mlflow_v1-30-0.patch) installed throughout this sample, and you adapt the lab sample to work with that same version as the SDK for deploying a model to SageMaker has changed**
+* `2.2.1`. If you want to install that version, you need to ensure mlflow `2.2.1` [here](./cognito-mlflow_v2-2-1.patch) installed throughout this sample, and you adapt the lab sample to work with that same version as the SDK for deploying a model to SageMaker has changed**
+* `2.3.1`. If you want to install that version, you need to ensure mlflow `2.3.1` [here](./cognito-mlflow_v2-3-1.patch) installed throughout this sample, and you adapt the lab sample to work with that same version as the SDK for deploying a model to SageMaker has changed**
+* `2.5.0`. If you want to install that version, you need to ensure mlflow `2.5.0` [here](./cognito-mlflow_v2-5-0.patch) installed throughout this sample, and you adapt the lab sample to work with that same version as the SDK for deploying a model to SageMaker has changed**
 
 ```bash
 cd ~/environment/sagemaker-studio-mlflow-integration/
@@ -133,18 +135,18 @@ If you would like to familiarize yourself the [CDKWorkshop](https://cdkworkshop.
 Using Cloud9 environment, open a new Terminal and use the following commands:
 ```bash
 cd ~/environment/sagemaker-studio-mlflow-integration/cdk
-npm install -g aws-cdk@2.86.0 --force
+npm install -g aws-cdk@2.104.0 --force
 cdk --version
 ```
 
-Take a note of the latest version that you install, at the time of writing this post it is `2.86.0`.
-Open the package.json file and replace the version “2.86.0” of the following modules with the latest version that you have installed above.
+Take a note of the latest version that you install, at the time of writing this post it is `2.104.0`.
+Open the package.json file and replace the version “2.104.0” of the following modules with the latest version that you have installed above.
 
 ```typescript
-"aws-cdk-lib": "2.86.0",
-"@aws-cdk/aws-amplify-alpha": "2.86.0-alpha.0",
-"@aws-cdk/aws-cognito-identitypool-alpha": "2.86.0-alpha.0",
-"@aws-cdk/aws-lambda-python-alpha": "2.86.0-alpha.0",
+"aws-cdk-lib": "2.104.0",
+"@aws-cdk/aws-amplify-alpha": "2.104.0-alpha.0",
+"@aws-cdk/aws-cognito-identitypool-alpha": "2.104.0-alpha.0",
+"@aws-cdk/aws-lambda-python-alpha": "2.104.0-alpha.0",
 ```
 
 This will install all the latest CDK modules under the `node_modules` directory (`npm install`) and prepare your AWS account to deploy resources with CDK (`cdk bootstrap`).

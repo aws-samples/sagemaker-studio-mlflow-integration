@@ -8,10 +8,10 @@
     "cdk": "cdk"
   },
   "devDependencies": {
-    "aws-cdk-lib": "2.86.0",
-    "@aws-cdk/aws-amplify-alpha": "2.86.0-alpha.0",
-    "@aws-cdk/aws-cognito-identitypool-alpha": "2.86.0-alpha.0",
-    "@aws-cdk/aws-lambda-python-alpha": "2.86.0-alpha.0",
+    "aws-cdk-lib": "2.104.0",
+    "@aws-cdk/aws-amplify-alpha": "2.104.0-alpha.0",
+    "@aws-cdk/aws-cognito-identitypool-alpha": "2.104.0-alpha.0",
+    "@aws-cdk/aws-lambda-python-alpha": "2.104.0-alpha.0",
     "@types/node": "10.17.27",
     "cdk-nag": "2.25.5",
     "aws-cdk": "2.86.0",
