@@ -6,4 +6,4 @@ routes:
       name: anthropic.claude-v2
       config:
         aws_config:
-          aws_region: $AWS_BEDROCK_REGION
+          aws_region: us-west-2

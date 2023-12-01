@@ -75,7 +75,6 @@ The CDK script expects the following ENV variables to be set
 ```bash
 AWS_REGION=<region-where-you-want-to-deploy>
 AWS_ACCOUNT=<AWS-account-where-you-want-to-deploy>
-AWS_BEDROCK_REGION=<AWS-region-where-you-want-to-access-bedrock>
 ```
 
 If you would like to use an existing SageMaker Studio domain, please set this ENV variable
@@ -179,7 +178,7 @@ If you are looking to interact with models from Amazon Bedrock, you need to [req
 Make sure to read and accept models' end-user license agreements or EULA.
 
 Note:
-- You can deploy the solution to a different region from where you requested Base Model access. Please specify the `AWS_BEDROCK_REGION` env variable.
+- You can deploy the solution to a different region from where you requested Base Model access. To do that, adapt the [config.yaml](src/mlflow-gateway/config.yaml) and redeploy.
 - **While the Base Model access approval is instant, it might take several minutes to get access and see the list of models in the UI.**
 
 ![sample](images/enable-models.gif)

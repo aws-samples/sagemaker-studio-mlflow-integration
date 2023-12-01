@@ -408,7 +408,8 @@ export class MLflowVpcStack extends cdk.Stack {
         environment: {
           'PORT': `${gatewayContainerPort}`,
           'WORKERS': '5',
-          'AWS_BEDROCK_REGION': `${process.env['AWS_BEDROCK_REGION'] || this.region}`
+          'AWS_REGION': this.region,
+          'AWS_DEFAULT_REGION': this.region
         },
         secrets: {
         },
