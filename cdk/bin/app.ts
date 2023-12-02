@@ -10,9 +10,17 @@ import { Aspects } from 'aws-cdk-lib';
 import { NagSuppressions } from 'cdk-nag'
 
 const env = { region: (process.env['AWS_REGION'] || 'us-west-2'), account: process.env['AWS_ACCOUNT'] };
+console.log('#####################################################################')
+console.log(`# you are deploying account ${env.account} in region: ${env.region} #`)
+console.log('#####################################################################')
 
 const domainId = (process.env['DOMAIN_ID'] || "" )
-
+if (domainId == "") {
+    console.log('no SageMaker domain ID has been provided')
+}
+else {
+    console.log(`SageMaker domain ID provided ${domainId}`)
+}
 const app = new cdk.App();
 
 const mlflowVpcStack = new MLflowVpcStack(
