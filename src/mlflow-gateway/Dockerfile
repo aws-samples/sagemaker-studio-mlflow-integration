@@ -3,7 +3,7 @@ FROM python:3.11.0
 ARG PORT=5001
 
 RUN pip install \
-    mlflow[gateway]==2.8.0\
+    mlflow[gateway]==2.8.1\
     boto3
 
 WORKDIR /mlflow/
