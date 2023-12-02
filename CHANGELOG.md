@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 2.8.1
+
+* upgrade to MLflow `2.8.1`
+* provide patch for MLflow UI `2.8.1`
+
 ## 2.8.0
 
 * upgrade to MLflow `2.8.0`
