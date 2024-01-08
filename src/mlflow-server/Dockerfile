@@ -3,7 +3,7 @@ FROM python:3.11.0
 ARG PORT=5000
 
 RUN pip install \
-    mlflow==2.8.1\
+    mlflow==2.9.2\
     boto3 \
     psycopg2==2.9.5
 

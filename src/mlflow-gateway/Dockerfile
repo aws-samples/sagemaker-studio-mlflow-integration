@@ -3,7 +3,7 @@ FROM python:3.11.0
 ARG PORT=5001
 
 RUN pip install \
-    mlflow[gateway]==2.8.1\
+    mlflow[genai]==2.9.2\
     boto3
 
 WORKDIR /mlflow/
@@ -12,7 +12,7 @@ COPY config.yaml ./
 
 EXPOSE ${PORT}
 
-CMD mlflow gateway start \
+CMD mlflow deployments start-server \
     --host 0.0.0.0 \
     --port ${PORT} \
     --config-path config.yaml \
