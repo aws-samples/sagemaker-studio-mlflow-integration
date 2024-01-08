@@ -218,10 +218,10 @@ export class RestApiGatewayStack extends cdk.Stack {
           },
           passthroughBehavior: PassthroughBehavior.WHEN_NO_TEMPLATES
       },
-      uri: `http://${httpApiInternalNLB.loadBalancerDnsName}:8081/api/2.0/gateway/routes/{proxy}`
+      uri: `http://${httpApiInternalNLB.loadBalancerDnsName}:8081/api/2.0/endpoints/{proxy}`
     });
 
-    const routesApiGatewayResourse = apiResource.addResource('2.0').addResource('gateway').addResource('routes')
+    const routesApiGatewayResourse = apiResource.addResource('2.0').addResource('endpoints')
 
     const routesResourceIntegration = new apigateway.Integration(
       {
@@ -232,14 +232,15 @@ export class RestApiGatewayStack extends cdk.Stack {
           vpcLink: link,
           passthroughBehavior: PassthroughBehavior.WHEN_NO_TEMPLATES
       },
-      uri: `http://${httpApiInternalNLB.loadBalancerDnsName}:8081/api/2.0/gateway/routes/`
+      uri: `http://${httpApiInternalNLB.loadBalancerDnsName}:8081/api/2.0/endpoints/`
     });
 
-    // /api/2.0/gateway/routes/
+    // // /api/2.0/endpoints/
     routesApiGatewayResourse.addMethod(
         'ANY',
         routesResourceIntegration
     )
+    
     routesApiGatewayResourse.addProxy({
       defaultIntegration: routesApiGatewayIntegration,
         defaultMethodOptions: {
@@ -252,7 +253,7 @@ export class RestApiGatewayStack extends cdk.Stack {
         anyMethod: true // "true" is the default
       });
 
-      // /gateway/{proxy+}
+      // /endpoints/{proxy+}
       const gatewayIntegration = new apigateway.Integration(
       {
         type: apigateway.IntegrationType.HTTP_PROXY,
@@ -265,10 +266,10 @@ export class RestApiGatewayStack extends cdk.Stack {
           },
           passthroughBehavior: PassthroughBehavior.WHEN_NO_TEMPLATES
       },
-      uri: `http://${httpApiInternalNLB.loadBalancerDnsName}:8081/gateway/{proxy}`
+      uri: `http://${httpApiInternalNLB.loadBalancerDnsName}:8081/endpoints/{proxy}`
     });
 
-    const gatewayResource = this.restApi.root.addResource('gateway')
+    const gatewayResource = this.restApi.root.addResource('endpoints')
 
     gatewayResource.addProxy({
       defaultIntegration: gatewayIntegration,
