@@ -378,7 +378,7 @@ export class MLflowVpcStack extends cdk.Stack {
           'DBHOST': rdsCluster.attrEndpointAddress,
           'DBPORT': `${dbPort}`,
           'DATABASE': dbName,
-          'MLFLOW_GATEWAY_URI': `http://${gatewayPrivateHostname}.${privateHostname}:${gatewayContainerPort}`
+          'MLFLOW_DEPLOYMENTS_TARGET': `http://${gatewayPrivateHostname}.${privateHostname}:${gatewayContainerPort}`
         },
         secrets: {
           USERNAME: ecs.Secret.fromSecretsManager(databaseCredentialsSecret, 'username'),
