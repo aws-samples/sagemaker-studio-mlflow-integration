@@ -1,7 +1,7 @@
 This sample corresponds to the AWS Blog Post [Securing MLflow in AWS: Fine-grained access control with AWS native services](https://aws.amazon.com/blogs/machine-learning/securing-mlflow-in-aws-fine-grained-access-control-with-aws-native-services/)
 
 We regularly update this repository to align with the latest release on MLflow.
-The current last supported version of MLflow is `2.8.1`, including MLflow tracking server and MLflow Gateway AI.
+The current last supported version of MLflow is `2.9.2`, including MLflow tracking server and MLflow Gateway AI.
 
 Check [CHANGELOG.md](CHANGELOG.md) for the latest changes.
 
