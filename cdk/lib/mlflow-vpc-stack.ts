@@ -150,7 +150,7 @@ export class MLflowVpcStack extends cdk.Stack {
       dbClusterIdentifier: `${mlflowServerServiceName}-cluster`,
       engineMode: 'serverless',
       engine: 'aurora-postgresql',
-      engineVersion: '11.16',
+      engineVersion: '13.12',
       databaseName: dbName,
       deletionProtection: false,
       masterUsername: databaseCredentialsSecret.secretValueFromJson('username').toString(),
