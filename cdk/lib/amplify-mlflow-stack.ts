@@ -49,11 +49,11 @@ export class AmplifyMlflowStack extends cdk.Stack {
                     phases: {
                         preBuild: {
                             commands: [
-                                'fallocate -l 4G /swapfile',
-                                'chmod 600 /swapfile',
-                                'mkswap /swapfile',
-                                'swapon /swapfile',
-                                'swapon -s',
+                                'sudo fallocate -l 4G /swapfile',
+                                'sudo chmod 600 /swapfile',
+                                'sudo mkswap /swapfile',
+                                'sudo swapon /swapfile',
+                                'sudo swapon -s',
                                 'yarn install'
                             ],
                         },
