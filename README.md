@@ -1,7 +1,7 @@
 This sample corresponds to the AWS Blog Post [Securing MLflow in AWS: Fine-grained access control with AWS native services](https://aws.amazon.com/blogs/machine-learning/securing-mlflow-in-aws-fine-grained-access-control-with-aws-native-services/)
 
 We regularly update this repository to align with the latest release on MLflow.
-The current last supported version of MLflow is `2.9.2`, including MLflow tracking server and MLflow Gateway AI.
+The current last supported version of MLflow is `2.12.2`, including MLflow tracking server and MLflow Gateway AI.
 
 Check [CHANGELOG.md](CHANGELOG.md) for the latest changes.
 
@@ -105,7 +105,7 @@ echo "export DOMAIN_ID=${DOMAIN_ID}" | tee -a ~/.bash_profile
 
 MLflow UI does not support any login workflow, nonetheless mechanisms to set the proper headers to authenticated API calls against a backend service.
 Amplify provides libraries that can be used to quickly add a login workflow, and to easily manage the lifecycle of the authentication tokens.
-We provide you a patch to be applied on top of MLflow `2.9.2` that adds Amplify React Components for authentication and how to add `Authorization` header with a `Bearer` token for every backend API call.
+We provide you a patch to be applied on top of MLflow `2.12.2` that adds Amplify React Components for authentication and how to add `Authorization` header with a `Bearer` token for every backend API call.
 The patch we provided can be checked [here](./cognito-mlflow_v2-9-2.patch) and it will enable a login flow backed by Amazon Cognito as shown in Fig. 2.
 **Note: we also provide patches for previous versions of MLflow
 
@@ -118,9 +118,9 @@ The patch we provided can be checked [here](./cognito-mlflow_v2-9-2.patch) and i
 
 ```bash
 cd ~/environment/sagemaker-studio-mlflow-integration/
-git clone --depth 1 --branch v2.9.2 https://github.com/mlflow/mlflow.git
+git clone --depth 1 --branch v2.12.2 https://github.com/mlflow/mlflow.git
 cd mlflow
-git am ../cognito-mlflow_v2-9-2.patch
+git am ../cognito-mlflow_v2-12-2.patch
 ```
 
 #### Resizing the Cloud9
@@ -263,7 +263,7 @@ sudo yum install -y python3.8
 Il on Cloud9 run the following (after installing Python 3.8)
 ```bash
 # install the libraries
-pip3.8 install mlflow==2.8.1 boto3 # or pip install mlflow==2.8.1 boto3 if your default pip comes alongside a python version >= 3.8
+pip3.8 install mlflow==2.12.2 boto3 # or pip install mlflow==2.12.2 boto3 if your default pip comes alongside a python version >= 3.8
 ```
 
 ```bash
